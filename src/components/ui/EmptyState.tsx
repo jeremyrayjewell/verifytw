@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -10,7 +11,8 @@ interface EmptyStateProps {
   description?: string;
   action?: {
     label: string;
-    onClick: () => void;
+    onClick?: () => void;
+    href?: string;
   };
   className?: string;
 }
@@ -39,12 +41,21 @@ const EmptyState: React.FC<EmptyStateProps> = ({
         </p>
       )}
       {action && (
-        <button
-          onClick={action.onClick}
-          className="text-civic-blue font-medium hover:underline focus-ring"
-        >
-          {action.label}
-        </button>
+        action.href ? (
+          <Link
+            href={action.href}
+            className="text-civic-blue font-medium hover:underline focus-ring rounded-base"
+          >
+            {action.label}
+          </Link>
+        ) : (
+          <button
+            onClick={action.onClick}
+            className="text-civic-blue font-medium hover:underline focus-ring rounded-base"
+          >
+            {action.label}
+          </button>
+        )
       )}
     </div>
   );

@@ -15,15 +15,19 @@ export const SEARCH_FILTER_VALUES = [
   'recent',
 ] as const;
 
+export const COMPANY_SOURCE_KIND_VALUES = ['real', 'mock'] as const;
+
 export type Status = (typeof STATUS_VALUES)[number];
 export type EntityType = (typeof ENTITY_TYPE_VALUES)[number];
 export type SearchFilter = (typeof SEARCH_FILTER_VALUES)[number];
+export type CompanySourceKind = (typeof COMPANY_SOURCE_KIND_VALUES)[number];
 
 export interface Company {
   ban: string;
   nameZh: string;
   nameEn?: string;
   status: Status;
+  officialStatus: string;
   representative: string;
   capital: string;
   address: string;
@@ -33,6 +37,9 @@ export interface Company {
   sourceUpdated: string;
   entityType: EntityType;
   statusLabel: string;
+  sourceKind?: CompanySourceKind;
+  fetchedAt?: string;
+  sourceUrl?: string;
   flags?: string[];
 }
 

@@ -8,7 +8,7 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 > 查公司、查雇主、查交易對象。公開資料，一次看懂。
 > Check Taiwan companies, employers, and business partners with public records.
 
-**Status:** MVP Frontend Prototype with mock data
+**Status:** MVP frontend with mock data plus first MOEA public-data integration for 統一編號 lookup and company keyword search
 
 ## What's Built
 
@@ -40,7 +40,10 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 - **Mock Data**: 7 sample companies in `src/lib/mockCompanies.ts`
 - **Zod Schemas**: Validation for Company, SearchQuery, Status
 - **Search Function**: Filters mock data by name, BAN, or representative
-- **TODO Comments**: Placeholders for real API integration (MOEA, MOF, Supabase)
+- **MOEA Lookup Spike**:
+  - `/company/[ban]` attempts a live MOEA company-registration lookup first, then falls back to mock data
+  - `/search?q=...` attempts a live MOEA company keyword search first, then falls back to mock/local results
+- **TODO Comments**: Placeholders for pagination, exact matching, MOF cross-checks, and caching
 
 ## Tech Stack
 
@@ -88,6 +91,58 @@ npm run build
 npm run start
 ```
 
+## Real-Data Spike: 統一編號 Lookup + Company Keyword Search
+
+The current public-data integration spike now covers:
+
+- `/company/[ban]` for 8-digit 統一編號 lookup
+- `/search?q=...` for keyword / company-name search
+
+- Source: MOEA / GCIS company registration public-data endpoints
+- 統一編號 lookup endpoint:
+  - `https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq {BAN}&$skip=0&$top=1`
+- company keyword search endpoint:
+  - `https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C?$format=json&$filter=Company_Name like {QUERY} and Company_Status eq 01&$skip=0&$top=20`
+- Behavior:
+  - validates 8-digit 統一編號 before detail lookup
+  - validates search queries before live keyword search
+  - tries live MOEA data first when enabled
+  - normalizes official MOEA fields into the app's `Company` shape
+  - falls back to mock/local results when live data is unavailable or returns no usable result
+
+### Environment Variables
+
+No environment variables are required for the default spike.
+
+Optional:
+
+```bash
+# Disable live MOEA lookup and use mock-only behavior
+MOEA_LOOKUP_ENABLED=false
+
+# Override the endpoint for testing or future proxying
+MOEA_COMPANY_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6
+```
+
+### Fallback Rules
+
+- `real data available` → render the real MOEA-backed company detail
+- `real API unavailable + matching mock record exists` → render the mock record with a calm fallback note
+- `real API unavailable + no matching mock record` → show a respectful unavailable state
+- `real API returns no record + no matching mock record` → show the existing not-found state
+- `live keyword results available` → render MOEA-backed search results
+- `live keyword results unavailable + matching mock/local results exist` → render mock/local results with a calm fallback note
+- `live keyword results return no usable result + matching mock/local results exist` → render mock/local results
+- `live keyword results return no usable result + no mock/local result` → show the existing calm no-results state
+
+### Known Limitations
+
+- Live keyword search currently uses the MOEA company dataset only, so `商業` and `分公司` live results are not yet covered.
+- The keyword endpoint is currently filtered to `Company_Status eq 01`, which favors active company registrations.
+- The MOEA response currently maps to the existing company/search shape; it does not yet include pagination, exact-name matching, tax cross-checks, or caching.
+- English company names are not provided by the current MOEA BAN endpoint, so live records may omit that field.
+- Public-data availability and response times depend on the external MOEA source.
+
 ## Project Structure
 
 ```
@@ -121,14 +176,20 @@ src/
 │
 ├── lib/
 │   ├── mockCompanies.ts     # Mock data + search function
+│   ├── companyLookup.ts     # Real-data + mock fallback orchestration for detail pages
+│   ├── companySearch.ts     # Real-data + mock fallback orchestration for search pages
+│   ├── validation.ts        # Zod schemas and validation helpers
+│   ├── companyDisplay.ts    # Display labels/helpers
+│   ├── sources/
+│   │   └── moea.ts          # MOEA company-registration lookup + keyword search
 │   └── utils.ts             # Helper functions (cn)
 │
 ├── types/
-│   └── company.ts           # Zod schemas + types
+│   └── company.ts           # Company/search types
 │
 └── config files:
     ├── tsconfig.json
-    ├── tailwind.config.ts
+    ├── tailwind.config.js
     ├── postcss.config.js
     └── next.config.js
 ```
@@ -205,31 +266,24 @@ Search filters by BAN, Chinese name, English name, or representative.
 ### TODO: API Integration
 All marked with `TODO:` comments in code:
 
-1. **Company Registration API (MOEA)**
-   - Search by name, BAN, keyword
-   - Fetch detail by BAN
-   - Location: `src/lib/mockCompanies.ts`
+1. **MOEA Keyword Search Expansion**
+   - Add pagination
+   - Add exact company-name matching
+   - Add branch/business registration coverage
+   - Location: `src/lib/sources/moea.ts`
 
 2. **Tax Registration Data (MOF)**
-   - Link company to tax status
-   - Risk flags for inactive/overdue companies
+   - Cross-check company registration against tax registration status
 
 3. **Supabase/Postgres**
-   - Cache popular searches
-   - User favorites/bookmarks
-   - Query analytics
-
-4. **PDF Export**
-   - Generate report PDFs
-   - Track exports for compliance
+   - Cache public lookup responses
+   - Store normalized source snapshots
 
 ### Recommended Next Steps
-1. Connect to real MOEA API for company data
-2. Add Supabase for user authentication and favorites
-3. Implement PDF export functionality
-4. Add search analytics and caching
-5. Build admin dashboard for data refresh
-6. Create public API for partner integrations
+1. Add pagination and exact-name matching for keyword search
+2. Add a caching layer before repeated MOEA requests
+3. Add MOF tax registration cross-checks
+4. Improve source-link display and field-level provenance
 
 ## Brand Guidelines
 
@@ -281,11 +335,11 @@ All marked with `TODO:` comments in code:
 - **AWS Amplify** (for AWS ecosystem)
 
 ### Environment Variables
-```
+```bash
 # .env.local
-NEXT_PUBLIC_API_BASE=https://api.moea.gov.tw
-NEXT_PUBLIC_SUPABASE_URL=...
-NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+MOEA_LOOKUP_ENABLED=false
+MOEA_COMPANY_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6
+MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C
 ```
 
 ## License & Attribution
@@ -298,8 +352,6 @@ For design system questions, see `/design-system` page.
 For component docs, check JSDoc comments in `src/components/`.
 
 ---
-
-**Happy building! 🎉**
 
 先查一下，再放心合作。
 Check first, partner with confidence.

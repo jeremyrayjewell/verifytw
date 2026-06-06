@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  COMPANY_SOURCE_KIND_VALUES,
   ENTITY_TYPE_VALUES,
   SEARCH_FILTER_VALUES,
   STATUS_VALUES,
@@ -26,6 +27,7 @@ export const companyRecordSchema = z.object({
   nameZh: z.string().trim().min(1, '公司名稱必填'),
   nameEn: z.string().trim().optional(),
   status: z.enum(STATUS_VALUES),
+  officialStatus: z.string().trim().min(1, '公司狀態必填'),
   representative: z.string().trim().min(1, '代表人必填'),
   capital: z.string().trim().min(1, '資本額必填'),
   address: z.string().trim().min(1, '地址必填'),
@@ -35,6 +37,9 @@ export const companyRecordSchema = z.object({
   sourceUpdated: z.string().trim().min(1, '資料來源更新日期必填'),
   entityType: z.enum(ENTITY_TYPE_VALUES),
   statusLabel: z.string().trim().min(1, '狀態說明必填'),
+  sourceKind: z.enum(COMPANY_SOURCE_KIND_VALUES).optional(),
+  fetchedAt: z.string().trim().optional(),
+  sourceUrl: z.string().trim().optional(),
   flags: z.array(z.string()).optional(),
 });
 

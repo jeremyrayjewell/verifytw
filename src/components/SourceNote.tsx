@@ -12,6 +12,9 @@ interface SourceNoteProps {
 }
 
 const SourceNote: React.FC<SourceNoteProps> = ({ company, className }) => {
+  const isRealData = company.sourceKind === 'real';
+  const fetchedAt = company.fetchedAt ?? MOCK_DATA_SYNC_DATE;
+
   return (
     <div
       className={cn(
@@ -35,15 +38,18 @@ const SourceNote: React.FC<SourceNoteProps> = ({ company, className }) => {
             </div>
             <div>
               <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">查詢 / 整理時間</dt>
-              <dd>{MOCK_DATA_SYNC_DATE}</dd>
+              <dd>{fetchedAt}</dd>
             </div>
           </dl>
           <p className="text-xs text-neutral-700 leading-relaxed">
-            本頁目前使用示範資料呈現未來公開資料畫面。
+            {isRealData
+              ? '本頁目前顯示的是公開資料整理解讀結果。'
+              : '本頁目前使用示範資料呈現未來公開資料畫面。'}
             {/* TODO: Add MOEA company registration source link. */}
             {/* TODO: Add MOEA keyword search source link. */}
             {/* TODO: Add MOF tax registration source link. */}
-            正式串接時，將補上經濟部商工登記、財政部稅籍與快取資料來源；查詢結果僅供初步參考，不等於法律、投資或交易建議。
+            {/* TODO: Add Supabase caching layer metadata. */}
+            本頁資料整理自經濟部商工登記公開資料。後續版本將補上財政部稅籍交叉查詢與快取資料來源。查詢結果僅供初步參考，不等於法律、投資或交易建議。
           </p>
         </div>
       </div>

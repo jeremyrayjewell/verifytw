@@ -17,12 +17,12 @@ const CompanyInfoTable: React.FC<CompanyInfoTableProps> = ({
 }) => {
   const rows = [
     { label: '統一編號', value: company.ban },
-    {
-      label: '公司狀態',
-      value: company.status,
-    },
     { label: '公司名稱', value: company.nameZh },
     { label: '英文名稱', value: company.nameEn || '-' },
+    {
+      label: '公司狀態',
+      value: company.officialStatus,
+    },
     { label: '登記類型', value: getEntityTypeLabel(company.entityType) },
     { label: '負責人', value: company.representative },
     { label: '資本額', value: `NT$ ${company.capital}` },

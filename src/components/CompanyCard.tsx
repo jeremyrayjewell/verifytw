@@ -58,7 +58,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
         <div className="flex flex-wrap items-center gap-md">
           <StatusBadge status={company.status} size="sm" />
           <span className="text-sm text-neutral-600">
-            公司狀態：<span className="font-medium text-main-ink">{company.status}</span>
+            公司狀態：<span className="font-medium text-main-ink">{company.officialStatus}</span>
           </span>
         </div>
 
@@ -66,7 +66,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="flex items-start gap-sm">
             <Building2 size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 統一編號 / 類型
               </dt>
               <dd className="text-main-ink">
@@ -77,7 +77,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="flex items-start gap-sm">
             <User size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 負責人
               </dt>
               <dd className="text-main-ink">{company.representative}</dd>
@@ -86,7 +86,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="flex items-start gap-sm">
             <Coins size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 資本額
               </dt>
               <dd className="text-main-ink">NT$ {company.capital}</dd>
@@ -95,7 +95,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="flex items-start gap-sm">
             <CalendarDays size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 最後更新日期
               </dt>
               <dd className="text-main-ink">{company.lastUpdated}</dd>
@@ -104,7 +104,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="sm:col-span-2 flex items-start gap-sm">
             <MapPin size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 登記地址
               </dt>
               <dd className="text-main-ink line-clamp-2">{company.address}</dd>
@@ -113,10 +113,14 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
           <div className="sm:col-span-2 flex items-start gap-sm">
             <FileText size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
-              <dt className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">
+              <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
                 資料來源
               </dt>
               <dd className="text-main-ink">{company.source}</dd>
+              <p className="mt-xs text-xs text-neutral-600">
+                來源更新：{company.sourceUpdated}
+                {company.fetchedAt ? ` ・ 查詢整理時間：${company.fetchedAt}` : ''}
+              </p>
             </div>
           </div>
         </dl>

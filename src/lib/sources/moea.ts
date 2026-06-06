@@ -13,6 +13,7 @@ const MOEA_COMPANY_KEYWORD_ENDPOINT =
 // TODO: Add source URL display handling once we expose official links in the UI.
 
 const MOEA_LOOKUP_TIMEOUT_MS = 8000;
+const MOEA_KEYWORD_LOOKUP_TIMEOUT_MS = 30000;
 const MOEA_KEYWORD_STATUS_CODE = '01';
 const MOEA_KEYWORD_TOP = 20;
 
@@ -295,7 +296,7 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
   url.searchParams.set('$top', String(MOEA_KEYWORD_TOP));
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), MOEA_LOOKUP_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), MOEA_KEYWORD_LOOKUP_TIMEOUT_MS);
   const requestUrl = url.toString();
 
   try {

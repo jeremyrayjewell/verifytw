@@ -1,5 +1,6 @@
 'use client';
 
+import { useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { SearchBox } from '@/components/SearchBox';
 import { Chip } from '@/components/ui/Chip';
@@ -24,11 +25,14 @@ export function SearchResultsControls({
   filterType,
 }: SearchResultsControlsProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
   const handleSearch = (newQuery: string) => {
     const businessIdResult = validateBan(newQuery);
     if (businessIdResult.success) {
-      router.push(`/company/${businessIdResult.data}`);
+      startTransition(() => {
+        router.push(`/company/${businessIdResult.data}`);
+      });
       return;
     }
 
@@ -37,7 +41,9 @@ export function SearchResultsControls({
       params.set('type', filterType);
     }
 
-    router.push(`/search?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/search?${params.toString()}`);
+    });
   };
 
   const handleFilterChange = (newType: SearchFilter) => {
@@ -48,7 +54,9 @@ export function SearchResultsControls({
       params.set('type', newType);
     }
 
-    router.push(`/search?${params.toString()}`);
+    startTransition(() => {
+      router.push(`/search?${params.toString()}`);
+    });
   };
 
   return (
@@ -57,6 +65,7 @@ export function SearchResultsControls({
         onSearch={handleSearch}
         placeholder="輸入公司名稱、統一編號 / Business ID 或負責人"
         initialValue={query}
+        isLoading={isPending}
       />
       <p className="mt-md text-sm text-neutral-700">
         建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
@@ -64,6 +73,11 @@ export function SearchResultsControls({
       <p className="mt-xs text-xs text-neutral-600">
         Use the registered company name or 8-digit Business ID for best results.
       </p>
+      {isPending && (
+        <p className="mt-sm text-sm text-neutral-600" aria-live="polite">
+          正在查詢公開資料，可能需要幾秒鐘。
+        </p>
+      )}
 
       {query && (
         <div className="mt-2xl">

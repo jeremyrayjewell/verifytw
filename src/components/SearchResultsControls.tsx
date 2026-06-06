@@ -61,12 +61,16 @@ export function SearchResultsControls({
       <p className="mt-md text-sm text-neutral-700">
         建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
       </p>
+      <p className="mt-xs text-xs text-neutral-600">
+        Use the registered company name or 8-digit Business ID for best results.
+      </p>
 
       {query && (
         <div className="mt-2xl">
-          <p className="text-sm font-medium text-neutral-600 mb-lg uppercase tracking-wider">
+          <p className="text-sm font-medium text-neutral-600 mb-xs uppercase tracking-wider">
             分類篩選
           </p>
+          <p className="text-xs text-neutral-500 mb-lg">Filters</p>
           <div className="flex flex-wrap gap-md">
             {filterChips.map((chip) => (
               <Chip

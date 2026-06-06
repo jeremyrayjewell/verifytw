@@ -9,6 +9,7 @@ export default function DeeperCheckPage() {
           <h1 className="text-3xl md:text-4xl font-bold text-main-ink mb-md">
             申請進一步查證
           </h1>
+          <p className="text-sm text-neutral-600 mb-md">Request a deeper check</p>
           <p className="text-base text-neutral-700 leading-relaxed">
             提供公司名稱、統一編號或相關資訊，我們會協助整理公開資料並回覆你下一步。
           </p>
@@ -24,14 +25,17 @@ export default function DeeperCheckPage() {
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">Basic Check — US$19</h3>
               <p className="text-sm text-neutral-700">公司、雇主或招募者的基本公開資料整理。</p>
+              <p className="text-xs text-neutral-600 mt-sm">Basic public-record check for a company, employer, or recruiter.</p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">Deal Check — US$39</h3>
               <p className="text-sm text-neutral-700">針對交易對象、客戶、租屋仲介或合作對象的較完整初步查證。</p>
+              <p className="text-xs text-neutral-600 mt-sm">Initial check for a business partner, client, rental agent, or deal counterparty.</p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">Taiwan Arrival Bundle — US$79</h3>
               <p className="text-sm text-neutral-700">最多 5 個對象的查證整理，適合即將來台工作、租屋或合作的人。</p>
+              <p className="text-xs text-neutral-600 mt-sm">Up to 5 checks for people preparing to work, rent, or do business in Taiwan.</p>
             </div>
           </div>
 

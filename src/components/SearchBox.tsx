@@ -75,7 +75,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
               'transition-colors duration-base',
               error && 'border-stamp-red-text bg-red-50'
             )}
-            aria-label="搜尋公司"
+            aria-label="搜尋公司 / Search company"
             aria-invalid={Boolean(error)}
             aria-describedby={error ? 'searchbox-error' : undefined}
           />
@@ -93,6 +93,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
       {error && (
         <p id="searchbox-error" className="mt-md text-sm text-stamp-red-text">
           {error}
+          {error.includes('Email') ? '' : ''}
         </p>
       )}
     </form>

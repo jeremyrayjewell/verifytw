@@ -51,6 +51,10 @@ export default function Home() {
 
           {/* Search Box */}
           <div className="mt-3xl animate-slideUp">
+            <div className="text-center mb-lg">
+              <p className="text-lg font-semibold text-main-ink">查詢企業資訊</p>
+              <p className="text-sm text-neutral-600">Search company information</p>
+            </div>
             <SearchBox
               onSearch={handleSearch}
               variant="hero"
@@ -58,6 +62,12 @@ export default function Home() {
             />
             <p className="mt-md text-sm text-neutral-700 text-center">
               可輸入公司名稱、統一編號、負責人或英文名稱
+            </p>
+            <p className="mt-xs text-xs text-neutral-600 text-center">
+              Company name, Business ID, or representative
+            </p>
+            <p className="mt-xs text-xs text-neutral-600 text-center">
+              Use the registered company name or 8-digit Business ID for best results.
             </p>
           </div>
 

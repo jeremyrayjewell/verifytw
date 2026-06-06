@@ -17,6 +17,7 @@ export default function DataPage() {
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl space-y-lg">
           <h2 className="text-2xl font-bold text-main-ink">VerifyTW 目前查詢什麼？</h2>
+          <p className="text-sm text-neutral-600">What VerifyTW currently checks</p>
           <p className="text-base text-neutral-700 leading-relaxed">
             VerifyTW 台企查目前整理經濟部商工登記公開資料，協助使用者快速查詢台灣公司的基本登記資訊。
           </p>
@@ -40,8 +41,12 @@ export default function DataPage() {
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl space-y-lg">
           <h2 className="text-2xl font-bold text-main-ink">什麼是統一編號？</h2>
+          <p className="text-sm text-neutral-600">What is a Business ID?</p>
           <p className="text-base text-neutral-700 leading-relaxed">
             統一編號是台灣公司或商業登記常用的 8 位數識別號碼。使用統一編號查詢通常比使用簡稱更準確。
+          </p>
+          <p className="text-sm text-neutral-600">
+            A Business ID is an 8-digit identifier used for Taiwan company and business registrations.
           </p>
           <NoticeBox type="info">
             例如搜尋「台積電」可能查不到完整結果，建議搜尋「台灣積體電路製造股份有限公司」或使用統一編號。
@@ -50,6 +55,7 @@ export default function DataPage() {
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl space-y-lg">
           <h2 className="text-2xl font-bold text-main-ink">目前資料來源</h2>
+          <p className="text-sm text-neutral-600">Current data source</p>
           <div className="space-y-sm text-base text-neutral-700">
             <p>經濟部商工登記公開資料</p>
             <p className="text-sm text-neutral-600">MOEA public company registration data</p>
@@ -61,6 +67,7 @@ export default function DataPage() {
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl space-y-lg">
           <h2 className="text-2xl font-bold text-main-ink">尚未涵蓋的資料</h2>
+          <p className="text-sm text-neutral-600">Not yet covered</p>
           <ul className="grid gap-md sm:grid-cols-2 text-sm text-neutral-700">
             {[
               '商業登記',
@@ -79,6 +86,7 @@ export default function DataPage() {
 
         <section className="rounded-base border-2 border-form-gray bg-support-blue-gray p-xl space-y-lg">
           <h2 className="text-2xl font-bold text-main-ink">查有資料不代表保證安全</h2>
+          <p className="text-sm text-neutral-600">Record found does not mean guaranteed safe.</p>
           <p className="text-base text-neutral-700 leading-relaxed">
             查到公開登記資料，代表該公司在目前查詢範圍內有相符公開資料；不代表交易、聘僱、租賃或付款一定安全。
           </p>

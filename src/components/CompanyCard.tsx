@@ -58,7 +58,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
         <div className="flex flex-wrap items-center gap-md">
           <StatusBadge status={company.status} size="sm" />
           <span className="text-sm text-neutral-600">
-            公司狀態：<span className="font-medium text-main-ink">{company.officialStatus}</span>
+            公司狀態 / Company status：<span className="font-medium text-main-ink">{company.officialStatus}</span>
           </span>
         </div>
 
@@ -67,7 +67,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <Building2 size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                統一編號 / 類型
+                統一編號 / Business ID
               </dt>
               <dd className="text-main-ink">
                 {company.ban} ・ {getEntityTypeLabel(company.entityType)}
@@ -78,7 +78,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <User size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                負責人
+                負責人 / Representative
               </dt>
               <dd className="text-main-ink">{company.representative}</dd>
             </div>
@@ -87,7 +87,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <Coins size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                資本額
+                資本額 / Capital
               </dt>
               <dd className="text-main-ink">NT$ {company.capital}</dd>
             </div>
@@ -96,7 +96,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <CalendarDays size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                最後更新日期
+                最後更新日期 / Last updated
               </dt>
               <dd className="text-main-ink">{company.lastUpdated}</dd>
             </div>
@@ -105,7 +105,7 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <MapPin size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                登記地址
+                登記地址 / Registered address
               </dt>
               <dd className="text-main-ink line-clamp-2">{company.address}</dd>
             </div>
@@ -114,21 +114,21 @@ const CompanyCard: React.FC<CompanyCardProps> = ({ company, className }) => {
             <FileText size={16} className="text-civic-blue mt-xs flex-shrink-0" />
             <div>
               <dt className="text-xs font-semibold text-neutral-600 tracking-wider">
-                資料來源
+                資料來源 / Source
               </dt>
               <dd className="text-main-ink">{company.source}</dd>
               <p className="mt-xs text-xs text-neutral-600">
-                來源更新：{company.sourceUpdated}
-                {company.fetchedAt ? ` ・ 查詢整理時間：${company.fetchedAt}` : ''}
+                來源更新 / Source updated：{company.sourceUpdated}
+                {company.fetchedAt ? ` ・ 查詢整理時間 / Checked at：${company.fetchedAt}` : ''}
               </p>
             </div>
           </div>
         </dl>
 
         <div className="flex items-center justify-between text-sm text-neutral-600 pt-md border-t border-form-gray">
-          <span>核准設立日期：{company.establishedDate}</span>
+          <span>核准設立日期 / Established：{company.establishedDate}</span>
           <span className="inline-flex items-center gap-sm font-medium text-civic-blue group-hover:text-data-teal-text transition-colors duration-base">
-            查看完整資料
+            查看完整資料 / View full record
             <ArrowRight size={18} />
           </span>
         </div>

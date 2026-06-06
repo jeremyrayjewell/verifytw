@@ -53,6 +53,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
       <section className="py-2xl px-lg bg-rice-paper border-b-2 border-form-gray">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-2xl font-bold text-main-ink mb-lg">查詢企業資訊</h1>
+          <p className="text-sm text-neutral-600 mb-lg">Search company information</p>
           <SearchResultsControls query={query} filterType={filterType} />
 
           {query && searchResult?.dataState === 'live' && (
@@ -97,11 +98,12 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           {query && searchResult && searchResult.dataState !== 'invalid_query' && (
             <div className="mb-xl rounded-base border-2 border-form-gray bg-rice-paper p-lg">
               <p className="text-sm text-neutral-700 mb-sm">
-                查詢：「<span className="font-medium text-main-ink">{searchResult.query}</span>」
+                查詢 / Search：「<span className="font-medium text-main-ink">{searchResult.query}</span>」
               </p>
               <p className="text-base text-main-ink font-semibold">
                 找到 {results.length} 筆結果
               </p>
+              <p className="text-sm text-neutral-600">{results.length} result(s) found</p>
               <p className="mt-sm text-sm text-neutral-600">
                 {filterType === 'recent'
                   ? '結果依最近更新資訊排序，方便先查看近期異動的公開資料。'
@@ -156,6 +158,11 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   href: '/',
                 }}
               />
+              {isLiveEmptyState && (
+                <p className="mt-lg text-sm text-neutral-600 text-center">
+                  No matching company-registration record found. Try the full registered company name or 8-digit Business ID.
+                </p>
+              )}
             </>
           ) : (
             <EmptyState

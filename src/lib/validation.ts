@@ -54,13 +54,13 @@ export const deeperCheckTypeValues = [
 
 export const deeperCheckRequestSchema = z.object({
   name: z.string().trim().min(1, '請輸入姓名').max(80, '姓名請控制在 80 個字元內'),
-  email: z.string().trim().email('請輸入有效的 Email'),
+  email: z.string().trim().email('請輸入有效的 Email。Please enter a valid email address.'),
   targetName: z.string().trim().min(1, '請輸入查證對象名稱').max(120, '查證對象名稱請控制在 120 個字元內'),
   businessId: z
     .string()
     .trim()
     .optional()
-    .refine((value) => !value || /^\d{8}$/.test(value), '若填寫統一編號，請輸入 8 碼數字'),
+    .refine((value) => !value || /^\d{8}$/.test(value), '若填寫統一編號，請輸入 8 碼數字。Business ID must be 8 digits.'),
   checkType: z.enum(deeperCheckTypeValues, {
     errorMap: () => ({ message: '請選擇查證類型' }),
   }),
@@ -73,7 +73,7 @@ export const deeperCheckRequestSchema = z.object({
     .string()
     .trim()
     .optional()
-    .refine((value) => !value || /^https?:\/\//i.test(value), '相關連結需以 http:// 或 https:// 開頭'),
+    .refine((value) => !value || /^https?:\/\//i.test(value), '相關連結需以 http:// 或 https:// 開頭。Use a full http:// or https:// link.'),
   companyWebsite: z.string().trim().max(0, '請勿填寫此欄位').optional(),
 });
 

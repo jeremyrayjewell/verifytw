@@ -16,21 +16,25 @@ const statusConfig = {
     icon: CheckCircle,
     color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     label: '資料相符',
+    helper: 'Record found / matched',
   },
   '建議再確認': {
     icon: AlertCircle,
     color: 'bg-orange-50 text-orange-700 border-orange-200',
     label: '建議再確認',
+    helper: 'Needs further checking',
   },
   '資料取得中': {
     icon: Clock,
     color: 'bg-blue-50 text-blue-700 border-blue-200',
     label: '資料取得中',
+    helper: 'Fetching data',
   },
   '無公開資料': {
     icon: HelpCircle,
     color: 'bg-gray-50 text-gray-700 border-gray-200',
     label: '無公開資料',
+    helper: 'No public record found',
   },
 };
 
@@ -62,7 +66,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         sizes[size]
       )}
       role="status"
-      aria-label={`狀態: ${status}`}
+      aria-label={`狀態: ${status} (${config.helper})`}
+      title={config.helper}
     >
       {showIcon && <Icon size={iconSizes[size]} />}
       <span>{status}</span>

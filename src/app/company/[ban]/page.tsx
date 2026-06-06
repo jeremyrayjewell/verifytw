@@ -138,6 +138,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
                   <p className="text-sm font-medium text-data-teal-text mb-sm">
                     公開資料查詢報告
                   </p>
+                  <p className="text-xs text-neutral-600 mb-sm">Public record lookup report</p>
                   <h1 className="text-3xl md:text-4xl font-bold text-main-ink mb-md">
                     {company.nameZh}
                   </h1>
@@ -191,21 +192,25 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
         <div className="max-w-[860px] mx-auto space-y-2xl">
           <div>
             <h2 className="text-2xl font-bold text-main-ink mb-xl">公司基本資料</h2>
+            <p className="text-sm text-neutral-600 mb-lg">Basic company information</p>
             <CompanyInfoTable company={company} />
           </div>
 
           <div>
             <h2 className="text-2xl font-bold text-main-ink mb-xl">查證摘要</h2>
+            <p className="text-sm text-neutral-600 mb-lg">Lookup summary</p>
             <RiskSummary company={company} />
           </div>
 
           <div>
             <h2 className="text-2xl font-bold text-main-ink mb-xl">公開資料來源</h2>
+            <p className="text-sm text-neutral-600 mb-lg">Public data source</p>
             <SourceNote company={company} />
           </div>
 
           <div>
             <h2 className="text-2xl font-bold text-main-ink mb-xl">注意事項</h2>
+            <p className="text-sm text-neutral-600 mb-lg">Important notes</p>
             <NoticeBox type="info" title="使用提醒">
               <div className="space-y-sm">
                 <p>查詢結果僅供初步參考。</p>
@@ -220,6 +225,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
           <div className="pt-lg border-t-2 border-form-gray">
             <h3 className="text-lg font-semibold text-main-ink mb-lg">延伸參考</h3>
+            <p className="text-sm text-neutral-600 mb-lg">References</p>
             <div className="flex flex-wrap gap-md">
               <a
                 href="https://findbiz.nat.gov.tw/"

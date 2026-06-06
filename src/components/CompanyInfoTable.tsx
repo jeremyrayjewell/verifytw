@@ -16,19 +16,19 @@ const CompanyInfoTable: React.FC<CompanyInfoTableProps> = ({
   className,
 }) => {
   const rows = [
-    { label: '統一編號', value: company.ban },
-    { label: '公司名稱', value: company.nameZh },
-    { label: '英文名稱', value: company.nameEn || '-' },
+    { label: '統一編號 / Business ID', value: company.ban },
+    { label: '公司名稱 / Company name', value: company.nameZh },
+    { label: '英文名稱 / English name', value: company.nameEn || '-' },
     {
-      label: '公司狀態',
+      label: '公司狀態 / Company status',
       value: company.officialStatus,
     },
-    { label: '登記類型', value: getEntityTypeLabel(company.entityType) },
-    { label: '負責人', value: company.representative },
-    { label: '資本額', value: `NT$ ${company.capital}` },
-    { label: '登記地址', value: company.address },
-    { label: '核准設立日期', value: company.establishedDate },
-    { label: '最後更新', value: company.lastUpdated },
+    { label: '登記類型 / Entity type', value: getEntityTypeLabel(company.entityType) },
+    { label: '負責人 / Representative', value: company.representative },
+    { label: '資本額 / Capital', value: `NT$ ${company.capital}` },
+    { label: '登記地址 / Registered address', value: company.address },
+    { label: '核准設立日期 / Established date', value: company.establishedDate },
+    { label: '最後更新 / Last updated', value: company.lastUpdated },
   ];
 
   return (

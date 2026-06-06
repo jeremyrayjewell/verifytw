@@ -8,7 +8,10 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 > 查公司、查雇主、查交易對象。公開資料，一次看懂。
 > Check Taiwan companies, employers, and business partners with public records.
 
-**Status:** validation-ready MVP with live MOEA company lookup, live company keyword search, and a lightweight deeper-check intake flow
+**Status:** Chinese-first validation-ready MVP with live MOEA company lookup, live company keyword search, a restrained English helper layer, and a lightweight deeper-check intake flow
+
+VerifyTW is designed as a Chinese-first Taiwan public-record tool with concise English helper text for Taiwan users plus English-speaking newcomers, job seekers, freelancers, and remote workers.
+It does not provide a full English mode yet.
 
 ## What's Built
 

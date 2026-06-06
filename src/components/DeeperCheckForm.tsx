@@ -172,6 +172,7 @@ export function DeeperCheckForm() {
         <NoticeBox type="warning" title="送出未完成">
           <div className="space-y-sm">
             <p>{serverError}</p>
+            <p className="text-xs text-neutral-700">We couldn’t submit your request right now.</p>
             <a
               href={fallbackMailto}
               className="inline-flex items-center text-civic-blue font-medium hover:underline focus-ring rounded-base"
@@ -216,7 +217,7 @@ export function DeeperCheckForm() {
             error={errors.targetName}
           />
           <Input
-            label="統一編號 / Business ID（選填）"
+            label="統一編號 / Business ID（選填 / optional）"
             value={form.businessId}
             onChange={(event) => updateField('businessId', event.target.value)}
             error={errors.businessId}
@@ -225,7 +226,7 @@ export function DeeperCheckForm() {
 
         <div>
           <label className="block text-sm font-medium text-main-ink mb-sm">
-            查證類型
+            查證類型 / Check type
           </label>
           <select
             value={form.checkType}
@@ -262,7 +263,7 @@ export function DeeperCheckForm() {
         </div>
 
         <Input
-          label="相關連結 / Related link（選填）"
+          label="相關連結 / Related link（選填 / optional）"
           value={form.relatedLink}
           onChange={(event) => updateField('relatedLink', event.target.value)}
           error={errors.relatedLink}

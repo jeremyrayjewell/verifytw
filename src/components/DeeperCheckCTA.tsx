@@ -18,6 +18,7 @@ export function DeeperCheckCTA({ className }: DeeperCheckCTAProps) {
             <h2 className="text-2xl font-bold text-main-ink mb-md">
               需要更完整的查證？
             </h2>
+            <p className="text-sm text-neutral-600 mb-md">Need a deeper check?</p>
             <p className="text-base text-neutral-700 leading-relaxed">
               如果你正在評估雇主、招募者、租屋仲介、客戶或交易對象，可以申請進一步查證。我們會整理公開資料，並用簡明語言說明目前看得到什麼、還需要確認什麼。
             </p>

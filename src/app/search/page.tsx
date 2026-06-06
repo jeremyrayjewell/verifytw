@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { CompanyCard } from '@/components/CompanyCard';
+import { DeeperCheckCTA } from '@/components/DeeperCheckCTA';
 import { SearchResultsControls } from '@/components/SearchResultsControls';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { NoticeBox } from '@/components/ui/NoticeBox';
@@ -173,6 +174,10 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
               </Link>
             </div>
           )}
+
+          <div className="mt-2xl">
+            <DeeperCheckCTA />
+          </div>
         </div>
       </section>
     </div>

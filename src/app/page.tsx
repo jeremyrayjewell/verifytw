@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Building2, Users2, ShieldCheck, Database, FileText } from 'lucide-react';
 import { SearchBox } from '@/components/SearchBox';
 import { NoticeBox } from '@/components/ui/NoticeBox';
+import { DeeperCheckCTA } from '@/components/DeeperCheckCTA';
 import { validateBan } from '@/lib/validation';
 
 export default function Home() {
@@ -132,6 +133,12 @@ export default function Home() {
               </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-lg py-2xl">
+        <div className="max-w-4xl mx-auto">
+          <DeeperCheckCTA />
         </div>
       </section>
 

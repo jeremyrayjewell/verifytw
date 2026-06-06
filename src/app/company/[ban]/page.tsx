@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CompanyInfoTable } from '@/components/CompanyInfoTable';
+import { DeeperCheckCTA } from '@/components/DeeperCheckCTA';
 import { RiskSummary } from '@/components/RiskSummary';
 import { SourceNote } from '@/components/SourceNote';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -214,6 +215,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               </div>
             </NoticeBox>
           </div>
+
+          <DeeperCheckCTA />
 
           <div className="pt-lg border-t-2 border-form-gray">
             <h3 className="text-lg font-semibold text-main-ink mb-lg">延伸參考</h3>

@@ -43,6 +43,40 @@ export const companyRecordSchema = z.object({
   flags: z.array(z.string()).optional(),
 });
 
+export const deeperCheckTypeValues = [
+  '雇主 / Employer',
+  '招募者 / Recruiter',
+  '交易對象 / Business partner',
+  '租屋仲介 / Rental agent',
+  '客戶 / Client',
+  '其他 / Other',
+] as const;
+
+export const deeperCheckRequestSchema = z.object({
+  name: z.string().trim().min(1, '請輸入姓名').max(80, '姓名請控制在 80 個字元內'),
+  email: z.string().trim().email('請輸入有效的 Email'),
+  targetName: z.string().trim().min(1, '請輸入查證對象名稱').max(120, '查證對象名稱請控制在 120 個字元內'),
+  businessId: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^\d{8}$/.test(value), '若填寫統一編號，請輸入 8 碼數字'),
+  checkType: z.enum(deeperCheckTypeValues, {
+    errorMap: () => ({ message: '請選擇查證類型' }),
+  }),
+  message: z
+    .string()
+    .trim()
+    .min(1, '請填寫你想確認的內容')
+    .max(1000, '內容請控制在 1000 個字元內'),
+  relatedLink: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || /^https?:\/\//i.test(value), '相關連結需以 http:// 或 https:// 開頭'),
+  companyWebsite: z.string().trim().max(0, '請勿填寫此欄位').optional(),
+});
+
 export function validateSearchQuery(input: string, type?: SearchQuery['type']) {
   return searchQuerySchema.safeParse({ query: input, type });
 }
@@ -57,4 +91,8 @@ export function validateCompanyRecord(input: unknown) {
 
 export function assertValidCompanies(input: unknown[]): Company[] {
   return input.map((record) => companyRecordSchema.parse(record));
+}
+
+export function validateDeeperCheckRequest(input: unknown) {
+  return deeperCheckRequestSchema.safeParse(input);
 }

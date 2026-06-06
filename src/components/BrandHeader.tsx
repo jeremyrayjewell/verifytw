@@ -17,8 +17,8 @@ const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
   const navLinks = [
     { href: '/', label: '首頁' },
     { href: '/search', label: '查詢' },
-    { href: '/#info', label: '資料說明' },
-    { href: '/#about', label: '關於我們' },
+    { href: '/data', label: '資料說明' },
+    { href: '/about', label: '關於我們' },
   ];
 
   return (
@@ -55,9 +55,7 @@ const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
               const isActive =
                 link.href === '/'
                   ? pathname === '/'
-                  : link.href === '/search'
-                    ? pathname === '/search'
-                    : false;
+                  : pathname === link.href;
 
               return (
                 <Link

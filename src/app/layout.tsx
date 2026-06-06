@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { BrandHeader } from '@/components/BrandHeader';
+import { SiteFooter } from '@/components/SiteFooter';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -37,16 +38,7 @@ export default function RootLayout({
         <main className="min-h-screen bg-surface">
           {children}
         </main>
-        <footer className="bg-main-ink text-rice-paper py-2xl px-lg mt-5xl">
-          <div className="max-w-6xl mx-auto text-center text-sm">
-            <p className="mb-md">
-              VerifyTW 台企查 © 2024. 
-            </p>
-            <p>
-              查公司、查雇主、查交易對象。公開資料，一次看懂。
-            </p>
-          </div>
-        </footer>
+        <SiteFooter />
       </body>
     </html>
   );

@@ -8,7 +8,7 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 > 查公司、查雇主、查交易對象。公開資料，一次看懂。
 > Check Taiwan companies, employers, and business partners with public records.
 
-**Status:** MVP frontend with mock data plus first MOEA public-data integration for 統一編號 lookup and company keyword search
+**Status:** validation-ready MVP with live MOEA company lookup, live company keyword search, and a lightweight deeper-check intake flow
 
 ## What's Built
 
@@ -16,6 +16,9 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 - **Landing Page** (`/`) - Hero section with search, trust note, and info cards
 - **Search Results** (`/search`) - Mock search with filter chips and result cards
 - **Company Detail** (`/company/[ban]`) - Public-record-style report page
+- **Data Guide** (`/data`) - What VerifyTW checks, what it does not yet cover
+- **About** (`/about`) - Product explanation and positioning
+- **Deeper Check** (`/deeper-check`) - Lightweight validation request intake
 - **Design System** (`/design-system`) - Internal reference for brand consistency
 
 ### Component Library
@@ -43,6 +46,7 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 - **MOEA Lookup Spike**:
   - `/company/[ban]` attempts a live MOEA company-registration lookup first, then falls back to mock data
   - `/search?q=...` attempts a live MOEA company keyword search first, then falls back to mock/local results
+- **Deeper Check Flow**: Validated intake form with server-side submission and Email fallback
 - **TODO Comments**: Placeholders for pagination, exact matching, MOF cross-checks, and caching
 
 ## Tech Stack
@@ -108,7 +112,28 @@ The current public-data integration spike now covers:
   - validates search queries before live keyword search
   - tries live MOEA data first when enabled
   - normalizes official MOEA fields into the app's `Company` shape
-  - falls back to mock/local results when live data is unavailable or returns no usable result
+- falls back to mock/local results when live data is unavailable or returns no usable result
+
+## Validation-ready MVP
+
+The current product goal is monetization validation, not building a full business platform yet.
+
+What is working now:
+
+- live MOEA company detail lookup by 統一編號
+- live MOEA keyword/company-name search
+- mock fallback when live results are unavailable or out of scope
+- a manual deeper-check request flow on `/deeper-check`
+- server-side intake suitable for monetization validation
+
+What is intentionally not built yet:
+
+- no payment system yet
+- no Supabase/cache yet
+- no MOF cross-check yet
+- no 商業 / 分公司 live coverage yet
+- no legal, investment, or transaction advice
+- no guarantee of safety
 
 ### Environment Variables
 
@@ -122,6 +147,12 @@ MOEA_LOOKUP_ENABLED=false
 
 # Override the endpoint for testing or future proxying
 MOEA_COMPANY_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6
+MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C
+
+# Deeper-check intake
+RESEND_API_KEY=re_xxx
+DEEPER_CHECK_TO_EMAIL=hello@verifytw.example
+DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>
 ```
 
 ### Fallback Rules
@@ -155,6 +186,12 @@ src/
 │   │   └── page.tsx         # Search results (/search)
 │   ├── company/[ban]/
 │   │   └── page.tsx         # Company detail (/company/[ban])
+│   ├── data/
+│   │   └── page.tsx         # Data guide (/data)
+│   ├── about/
+│   │   └── page.tsx         # About page (/about)
+│   ├── deeper-check/
+│   │   └── page.tsx         # Manual deeper-check request (/deeper-check)
 │   └── design-system/
 │       └── page.tsx         # Design system reference
 │
@@ -168,11 +205,15 @@ src/
 │   │   ├── LoadingSkeleton.tsx
 │   │   └── EmptyState.tsx
 │   ├── BrandHeader.tsx      # Navigation + logo
+│   ├── SiteFooter.tsx       # Footer links
 │   ├── SearchBox.tsx        # Search form
+│   ├── SearchResultsControls.tsx
 │   ├── CompanyCard.tsx      # Search result card
 │   ├── CompanyInfoTable.tsx # Detail page table
 │   ├── RiskSummary.tsx      # Risk/check summary
 │   └── SourceNote.tsx       # Data source citation
+│   ├── DeeperCheckCTA.tsx   # Conversion CTA
+│   └── DeeperCheckForm.tsx  # Manual request form
 │
 ├── lib/
 │   ├── mockCompanies.ts     # Mock data + search function
@@ -341,6 +382,43 @@ MOEA_LOOKUP_ENABLED=false
 MOEA_COMPANY_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6
 MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C
 ```
+
+## Deeper-check Intake
+
+- `/deeper-check` now submits to a server-side intake endpoint: `src/app/api/deeper-check/route.ts`
+- The endpoint validates the request body with Zod and sends an email using Resend
+- The client shows a success confirmation without opening the user's local mail app
+- If server submission fails, the UI shows a calm error state plus an Email fallback link
+- Recipient address is controlled by environment variables and is never hardcoded as a real personal email
+- No payment system is implemented yet; payment remains manual and out of scope for this MVP
+- This flow exists to validate demand for a paid/manual deeper-check service before building a larger platform
+
+### Local Development Without Resend
+
+You can run the app locally without configuring Resend.
+
+- Leave `RESEND_API_KEY`, `DEEPER_CHECK_TO_EMAIL`, and `DEEPER_CHECK_FROM_EMAIL` unset
+- The form will still validate normally
+- Submission will fail in a controlled way and show:
+  - `暫時無法送出申請。你可以稍後再試，或使用 Email 備用方式聯絡我們。`
+
+### Testing Success / Failure
+
+To test failure locally:
+
+1. leave the Resend env vars unset
+2. submit a valid deeper-check form
+3. confirm the controlled error message appears
+4. confirm the Email fallback link is shown
+
+To test success locally:
+
+1. set `RESEND_API_KEY`
+2. set `DEEPER_CHECK_TO_EMAIL=hello@verifytw.example` or your own safe test inbox
+3. set `DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>`
+4. restart the server
+5. submit a valid deeper-check form
+6. confirm the success message appears without opening a local mail app
 
 ## License & Attribution
 

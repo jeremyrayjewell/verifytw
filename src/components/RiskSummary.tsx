@@ -11,11 +11,14 @@ interface RiskSummaryProps {
 }
 
 const generateSummaryPoints = (company: Company): { text: string; positive: boolean }[] => {
-  const points = [];
+  const points: { text: string; positive: boolean }[] = [];
 
   // Always show status confirmation
   points.push({
-    text: '目前公開資料顯示此公司為核准設立。',
+    text:
+      company.status === '資料相符'
+        ? '目前公開資料顯示此公司為「核准設立」。'
+        : company.statusLabel,
     positive: company.status === '資料相符' || company.status === '資料取得中',
   });
 
@@ -44,7 +47,7 @@ const generateSummaryPoints = (company: Company): { text: string; positive: bool
   // Tax data
   if (company.flags?.includes('missing_tax_data')) {
     points.push({
-      text: '目前尚未取得完整的稅務登記資訊，可能為新登記或已停業。',
+      text: '目前尚未取得完整的稅務登記資訊，建議稍後再查詢並與對方提供的資料交叉確認。',
       positive: false,
     });
   }
@@ -52,8 +55,8 @@ const generateSummaryPoints = (company: Company): { text: string; positive: bool
   // Generic confirmation
   if (points.length === 2) {
     points.push({
-      text: '部分資訊仍建議與對方提供的文件交叉確認。',
-      positive: true,
+      text: '部分資訊仍建議與對方提供的文件、合約或付款資訊交叉確認。',
+      positive: false,
     });
   }
 

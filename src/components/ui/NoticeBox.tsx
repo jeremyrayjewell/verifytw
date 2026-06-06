@@ -1,14 +1,20 @@
 'use client';
 
 import React from 'react';
-import { AlertCircle, Info, CheckCircle, AlertTriangle } from 'lucide-react';
+import {
+  AlertCircle,
+  Info,
+  CheckCircle,
+  AlertTriangle,
+  type LucideIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NoticeBoxProps {
   type?: 'info' | 'warning' | 'error' | 'success';
   title?: string;
   children: React.ReactNode;
-  icon?: React.ReactNode;
+  icon?: LucideIcon;
 }
 
 const noticeConfig = {
@@ -67,9 +73,9 @@ const NoticeBox: React.FC<NoticeBoxProps> = ({
             {title}
           </p>
         )}
-        <p className={cn('text-sm leading-relaxed', config.textColor)}>
+        <div className={cn('text-sm leading-relaxed', config.textColor)}>
           {children}
-        </p>
+        </div>
       </div>
     </div>
   );

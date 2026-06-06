@@ -4,13 +4,14 @@ import React from 'react';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { validateSearchQuery } from '@/lib/validation';
 
 interface SearchBoxProps {
   onSearch: (query: string) => void;
   placeholder?: string;
   variant?: 'hero' | 'compact';
   isLoading?: boolean;
+  initialValue?: string;
 }
 
 const SearchBox: React.FC<SearchBoxProps> = ({
@@ -18,14 +19,26 @@ const SearchBox: React.FC<SearchBoxProps> = ({
   placeholder = '輸入公司名稱、統一編號或負責人',
   variant = 'compact',
   isLoading = false,
+  initialValue = '',
 }) => {
-  const [query, setQuery] = React.useState('');
+  const [query, setQuery] = React.useState(initialValue);
+  const [error, setError] = React.useState('');
+
+  React.useEffect(() => {
+    setQuery(initialValue);
+  }, [initialValue]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (query.trim()) {
-      onSearch(query);
+    const parsed = validateSearchQuery(query);
+
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message || '請先輸入查詢內容');
+      return;
     }
+
+    setError('');
+    onSearch(parsed.data.query);
   };
 
   const heroPadding = variant === 'hero' ? 'p-2xl' : 'p-lg';
@@ -37,6 +50,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
         'w-full rounded-base bg-rice-paper border-2 border-form-gray',
         heroPadding
       )}
+      noValidate
     >
       <div className="flex flex-col sm:flex-row gap-md items-stretch sm:items-center">
         <div className="flex-1 relative">
@@ -47,15 +61,23 @@ const SearchBox: React.FC<SearchBoxProps> = ({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              if (error) {
+                setError('');
+              }
+            }}
             placeholder={placeholder}
             className={cn(
               'w-full pl-2xl pr-lg py-md text-base bg-surface border-2 border-form-gray rounded-base',
               'placeholder:text-neutral-500',
               'focus-ring',
-              'transition-colors duration-base'
+              'transition-colors duration-base',
+              error && 'border-stamp-red-text bg-red-50'
             )}
             aria-label="搜尋公司"
+            aria-invalid={Boolean(error)}
+            aria-describedby={error ? 'searchbox-error' : undefined}
           />
         </div>
         <Button
@@ -68,6 +90,11 @@ const SearchBox: React.FC<SearchBoxProps> = ({
           查詢
         </Button>
       </div>
+      {error && (
+        <p id="searchbox-error" className="mt-md text-sm text-stamp-red-text">
+          {error}
+        </p>
+      )}
     </form>
   );
 };

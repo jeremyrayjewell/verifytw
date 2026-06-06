@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,14 @@ interface BrandHeaderProps {
 
 const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const pathname = usePathname();
+
+  const navLinks = [
+    { href: '/', label: '首頁' },
+    { href: '/search', label: '查詢' },
+    { href: '/#info', label: '資料說明' },
+    { href: '/#about', label: '關於我們' },
+  ];
 
   return (
     <header
@@ -19,17 +28,17 @@ const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
         className
       )}
     >
-      <div className="max-w-6xl mx-auto px-lg py-lg">
+      <div className="max-w-6xl mx-auto px-lg py-md">
         <nav className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-md focus-ring rounded-base">
             <div className="flex items-center gap-xs">
               <CheckCircle
-                size={28}
+                size={32}
                 className="text-civic-blue flex-shrink-0"
               />
               <div className="flex flex-col -space-y-1">
-                <span className="text-base font-bold text-main-ink">
+                <span className="text-lg font-bold text-main-ink">
                   Verify
                   <span className="text-data-teal">TW</span>
                 </span>
@@ -42,30 +51,29 @@ const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-xl">
-            <Link
-              href="/"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base focus-ring rounded-base px-md py-xs"
-            >
-              首頁
-            </Link>
-            <Link
-              href="/search"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base focus-ring rounded-base px-md py-xs"
-            >
-              查詢
-            </Link>
-            <a
-              href="#info"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base focus-ring rounded-base px-md py-xs"
-            >
-              資料說明
-            </a>
-            <a
-              href="#about"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base focus-ring rounded-base px-md py-xs"
-            >
-              關於我們
-            </a>
+            {navLinks.map((link) => {
+              const isActive =
+                link.href === '/'
+                  ? pathname === '/'
+                  : link.href === '/search'
+                    ? pathname === '/search'
+                    : false;
+
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={cn(
+                    'px-md py-sm text-sm font-medium transition-colors duration-base focus-ring rounded-md',
+                    isActive
+                      ? 'bg-rice-paper text-main-ink'
+                      : 'text-neutral-700 hover:bg-rice-paper hover:text-civic-blue'
+                  )}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Mobile Menu Toggle */}
@@ -98,30 +106,15 @@ const BrandHeader: React.FC<BrandHeaderProps> = ({ className }) => {
         {/* Mobile Navigation */}
         {mobileMenuOpen && (
           <div className="md:hidden mt-lg pt-lg border-t-2 border-form-gray flex flex-col gap-md">
-            <Link
-              href="/"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base px-md py-xs"
-            >
-              首頁
-            </Link>
-            <Link
-              href="/search"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base px-md py-xs"
-            >
-              查詢
-            </Link>
-            <a
-              href="#info"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base px-md py-xs"
-            >
-              資料說明
-            </a>
-            <a
-              href="#about"
-              className="text-main-ink font-medium hover:text-civic-blue transition-colors duration-base px-md py-xs"
-            >
-              關於我們
-            </a>
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-md px-md py-sm text-main-ink font-medium hover:bg-rice-paper hover:text-civic-blue transition-colors duration-base"
+              >
+                {link.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>

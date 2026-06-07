@@ -155,7 +155,7 @@ export function DeeperCheckForm() {
       <NoticeBox type="info" title="目前送出方式">
         <div className="space-y-sm">
           <p>目前此表單會直接送出查證申請。若送出失敗，你仍可使用 Email 備用方式聯絡我們。</p>
-          <p className="text-xs text-neutral-600">Recipient placeholder: {MAILTO_RECIPIENT}</p>
+          <p className="text-xs text-neutral-600">若送出失敗，頁面會提供 Email 備用方式。</p>
         </div>
       </NoticeBox>
 

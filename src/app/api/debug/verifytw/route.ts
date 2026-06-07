@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getMoeaDebugConfig, isMoeaLookupDisabled } from '@/lib/sources/moea';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 function isDebugEnabled() {
   return process.env.NODE_ENV === 'development' || process.env.VERIFYTW_DEBUG_ENABLED === 'true';
 }

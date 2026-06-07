@@ -42,7 +42,7 @@ type MoeaCompanyRecord = Partial<{
 
 export interface MoeaLookupResult {
   company: Company | null;
-  state: 'found' | 'not_found' | 'unavailable';
+  state: 'found' | 'not_found' | 'unavailable' | 'timeout' | 'parse_error';
   message?: string;
 }
 
@@ -54,6 +54,16 @@ export interface MoeaKeywordSearchResult {
 
 export function isMoeaLookupDisabled(): boolean {
   return process.env.MOEA_LOOKUP_ENABLED === 'false';
+}
+
+export function getMoeaDebugConfig() {
+  return {
+    companyByBanEndpoint: MOEA_COMPANY_BY_BAN_ENDPOINT,
+    keywordEndpoint: MOEA_COMPANY_KEYWORD_ENDPOINT,
+    banTimeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+    keywordTimeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
+    lookupEnabled: !isMoeaLookupDisabled(),
+  };
 }
 
 function formatDate(value: string | number | undefined): string {
@@ -185,33 +195,83 @@ function isKeywordPayloadParseable(payload: unknown): boolean {
 }
 
 function logMoeaKeywordDebug(details: {
-  classification: 'live' | 'empty' | 'fallback' | 'unavailable' | 'parse-error';
+  classification: 'live-success' | 'zero-results' | 'fallback' | 'timeout' | 'unavailable' | 'parse-error';
+  originalQuery?: string;
+  aliasExpandedQuery?: string;
+  broaderQuery?: string;
   url: string;
+  timeoutMs: number;
   responseStatus?: number;
   contentType?: string | null;
   preview?: string;
   parsedResultCount?: number;
+  errorMessage?: string;
 }) {
   if (process.env.NODE_ENV !== 'development') {
     return;
   }
 
   console.log('[verifytw][moea-keyword]', {
+    originalQuery: details.originalQuery ?? null,
+    aliasExpandedQuery: details.aliasExpandedQuery ?? null,
+    broaderQuery: details.broaderQuery ?? null,
     requestUrl: details.url,
+    timeoutMs: details.timeoutMs,
     responseStatus: details.responseStatus ?? null,
     contentType: details.contentType ?? null,
     rawPreview: details.preview ?? '',
     parsedResultCount: details.parsedResultCount ?? 0,
     classification: details.classification,
+    errorMessage: details.errorMessage ?? null,
+  });
+}
+
+function logMoeaBanDebug(details: {
+  lookupEnabled: boolean;
+  url: string;
+  timeoutMs: number;
+  responseStatus?: number;
+  contentType?: string | null;
+  preview?: string;
+  parsedResultCount?: number;
+  normalizedCompanyName?: string;
+  normalizedBan?: string;
+  classification: 'success' | 'not-found' | 'timeout' | 'unavailable' | 'parse-error' | 'invalid-ban';
+  errorMessage?: string;
+}) {
+  if (process.env.NODE_ENV !== 'development') {
+    return;
+  }
+
+  console.log('[verifytw][moea-ban]', {
+    moeaLookupEnabled: details.lookupEnabled,
+    requestUrl: details.url,
+    timeoutMs: details.timeoutMs,
+    responseStatus: details.responseStatus ?? null,
+    contentType: details.contentType ?? null,
+    rawPreview: details.preview ?? '',
+    parsedResultCount: details.parsedResultCount ?? 0,
+    normalizedCompanyName: details.normalizedCompanyName ?? null,
+    normalizedBan: details.normalizedBan ?? null,
+    classification: details.classification,
+    errorMessage: details.errorMessage ?? null,
   });
 }
 
 export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResult> {
   const parsedBan = validateBan(ban);
   if (!parsedBan.success) {
+    logMoeaBanDebug({
+      lookupEnabled: !isMoeaLookupDisabled(),
+      url: MOEA_COMPANY_BY_BAN_ENDPOINT,
+      timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+      classification: 'invalid-ban',
+      errorMessage: parsedBan.error.issues[0]?.message ?? '請輸入 8 碼統一編號',
+    });
+
     return {
       company: null,
-      state: 'unavailable',
+      state: 'parse_error',
       message: parsedBan.error.issues[0]?.message ?? '請輸入 8 碼統一編號',
     };
   }
@@ -234,7 +294,22 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       signal: controller.signal,
     });
 
+    const contentType = response.headers.get('content-type');
+    const rawText = await response.text();
+    const preview = rawText.slice(0, 500);
+
     if (!response.ok) {
+      logMoeaBanDebug({
+        lookupEnabled: !isMoeaLookupDisabled(),
+        url: url.toString(),
+        timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 0,
+        classification: 'unavailable',
+      });
+
       return {
         company: null,
         state: 'unavailable',
@@ -242,10 +317,42 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       };
     }
 
-    const payload = (await response.json()) as unknown;
+    let payload: unknown;
+    try {
+      payload = JSON.parse(rawText) as unknown;
+    } catch {
+      logMoeaBanDebug({
+        lookupEnabled: !isMoeaLookupDisabled(),
+        url: url.toString(),
+        timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 0,
+        classification: 'parse-error',
+      });
+
+      return {
+        company: null,
+        state: 'parse_error',
+        message: '公開資料格式暫時無法辨識，請稍後再試。',
+      };
+    }
+
     const record = getFirstRecord(payload);
 
     if (!record) {
+      logMoeaBanDebug({
+        lookupEnabled: !isMoeaLookupDisabled(),
+        url: url.toString(),
+        timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 0,
+        classification: 'not-found',
+      });
+
       return {
         company: null,
         state: 'not_found',
@@ -254,18 +361,67 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
 
     const company = normalizeMoeaCompany(record);
     if (!company) {
+      logMoeaBanDebug({
+        lookupEnabled: !isMoeaLookupDisabled(),
+        url: url.toString(),
+        timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 1,
+        classification: 'parse-error',
+      });
+
       return {
         company: null,
-        state: 'unavailable',
+        state: 'parse_error',
         message: '公開資料格式暫時無法辨識，請稍後再試。',
       };
     }
+
+    logMoeaBanDebug({
+      lookupEnabled: !isMoeaLookupDisabled(),
+      url: url.toString(),
+      timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+      responseStatus: response.status,
+      contentType,
+      parsedResultCount: 1,
+      normalizedCompanyName: company.nameZh,
+      normalizedBan: company.ban,
+      classification: 'success',
+    });
 
     return {
       company,
       state: 'found',
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logMoeaBanDebug({
+        lookupEnabled: !isMoeaLookupDisabled(),
+        url: url.toString(),
+        timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+        parsedResultCount: 0,
+        classification: 'timeout',
+        errorMessage: error.message,
+      });
+
+      return {
+        company: null,
+        state: 'timeout',
+        message: '公開資料回應較慢，請稍後再試。',
+      };
+    }
+
+    logMoeaBanDebug({
+      lookupEnabled: !isMoeaLookupDisabled(),
+      url: url.toString(),
+      timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
+      parsedResultCount: 0,
+      classification: 'unavailable',
+      errorMessage: error instanceof Error ? error.message : 'unknown error',
+    });
+
     return {
       company: null,
       state: 'unavailable',
@@ -276,7 +432,14 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
   }
 }
 
-export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaKeywordSearchResult> {
+export async function searchMoeaCompaniesByKeyword(
+  query: string,
+  debugMeta?: {
+    originalQuery?: string;
+    aliasExpandedQuery?: string;
+    broaderQuery?: string;
+  }
+): Promise<MoeaKeywordSearchResult> {
   const parsedQuery = validateSearchQuery(query, 'all');
   if (!parsedQuery.success) {
     return {
@@ -315,7 +478,11 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
     if (!response.ok) {
       logMoeaKeywordDebug({
         classification: 'unavailable',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
         url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
         contentType,
         preview,
@@ -335,7 +502,11 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
     } catch {
       logMoeaKeywordDebug({
         classification: 'parse-error',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
         url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
         contentType,
         preview,
@@ -352,7 +523,11 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
     if (!isKeywordPayloadParseable(payload)) {
       logMoeaKeywordDebug({
         classification: 'parse-error',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
         url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
         contentType,
         preview,
@@ -382,8 +557,12 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
 
     if (companies.length === 0) {
       logMoeaKeywordDebug({
-        classification: 'empty',
+        classification: 'zero-results',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
         url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
         contentType,
         preview,
@@ -398,8 +577,12 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
     }
 
     logMoeaKeywordDebug({
-      classification: 'live',
+      classification: 'live-success',
+      originalQuery: debugMeta?.originalQuery,
+      aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+      broaderQuery: debugMeta?.broaderQuery,
       url: requestUrl,
+      timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
       responseStatus: response.status,
       contentType,
       preview,
@@ -413,10 +596,15 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       logMoeaKeywordDebug({
-        classification: 'unavailable',
+        classification: 'timeout',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
         url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         preview: '',
         parsedResultCount: 0,
+        errorMessage: error.message,
       });
 
       return {
@@ -428,9 +616,14 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
 
     logMoeaKeywordDebug({
       classification: 'unavailable',
+      originalQuery: debugMeta?.originalQuery,
+      aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+      broaderQuery: debugMeta?.broaderQuery,
       url: requestUrl,
+      timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
       preview: '',
       parsedResultCount: 0,
+      errorMessage: error instanceof Error ? error.message : 'unknown error',
     });
 
     return {

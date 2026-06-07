@@ -82,6 +82,9 @@ function logSearchClassification(details: {
   filterType: SearchFilter;
   classification: 'live' | 'empty' | 'fallback' | 'unavailable' | 'parse-error' | 'mock' | 'invalid-query';
   resultCount: number;
+  aliasExpandedQuery?: string;
+  broaderQuery?: string;
+  finalLiveQuery?: string;
 }) {
   if (process.env.NODE_ENV !== 'development') {
     return;
@@ -125,6 +128,14 @@ export async function getSearchResults(
 
   const query = parsedQuery.data.query;
   const liveCandidates = buildLiveKeywordCandidates(query);
+  const aliasExpandedQuery =
+    liveCandidates.find((candidate) =>
+      candidate.notes.some((note) => note.includes('常見簡稱對應'))
+    )?.query;
+  const broaderQuery =
+    liveCandidates.find((candidate) =>
+      candidate.notes.some((note) => note.includes('較寬鬆'))
+    )?.query;
   const mockResults = searchCompanies(query, filterType);
   const isBusinessIdSearch = validateBan(query).success;
 
@@ -134,6 +145,8 @@ export async function getSearchResults(
       filterType,
       classification: 'mock',
       resultCount: mockResults.length,
+      aliasExpandedQuery,
+      broaderQuery,
     });
 
     return {
@@ -160,7 +173,11 @@ export async function getSearchResults(
   let matchedCandidate = liveCandidates[0] ?? { query, notes: [] };
 
   for (const candidate of liveCandidates) {
-    const candidateResult = await searchMoeaCompaniesByKeyword(candidate.query);
+    const candidateResult = await searchMoeaCompaniesByKeyword(candidate.query, {
+      originalQuery: query,
+      aliasExpandedQuery,
+      broaderQuery,
+    });
     liveResult = candidateResult;
     matchedCandidate = candidate;
 
@@ -185,6 +202,9 @@ export async function getSearchResults(
       filterType,
       classification: 'live',
       resultCount: companies.length,
+      aliasExpandedQuery,
+      broaderQuery,
+      finalLiveQuery: matchedCandidate.query,
     });
 
     return {
@@ -225,6 +245,9 @@ export async function getSearchResults(
             ? 'parse-error'
             : 'fallback',
       resultCount: mockResults.length,
+      aliasExpandedQuery,
+      broaderQuery,
+      finalLiveQuery: matchedCandidate.query,
     });
 
     return {
@@ -251,8 +274,11 @@ export async function getSearchResults(
         : liveResult.state === 'parse_error'
           ? 'parse-error'
           : 'empty',
-    resultCount: 0,
-  });
+      resultCount: 0,
+      aliasExpandedQuery,
+      broaderQuery,
+      finalLiveQuery: matchedCandidate.query,
+    });
 
   return {
     companies: [],

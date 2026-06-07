@@ -120,6 +120,10 @@ The current public-data integration spike now covers:
   - normalizes official MOEA fields into the app's `Company` shape
 - falls back to mock/local results when live data is unavailable or returns no usable result
 
+Keyword search depends on MOEA response speed and official registered company names.
+Business ID lookup is usually more reliable.
+Alias mapping is limited and disclosed in the UI when used.
+
 ## Validation-ready MVP
 
 The current product goal is monetization validation, not building a full business platform yet.
@@ -172,6 +176,47 @@ DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>
 - `live keyword results return no usable result + matching mock/local results exist` → render mock/local results
 - `live keyword results return no usable result + no mock/local result` → show the existing calm no-results state
 
+### Local Troubleshooting
+
+If local testing becomes confusing, especially when `3000` and `3001` show different behavior:
+
+1. Stop every running local Next server.
+   - `Ctrl+C`
+2. Clear the local build output.
+   - `Remove-Item -Recurse -Force .next`
+3. Reinstall if needed.
+   - `npm install`
+4. Re-run checks.
+   - `npm run lint`
+   - `npm run build`
+5. Start a single production-style local server.
+   - `npm run start`
+
+Notes:
+- Use only one local port during testing.
+- If `3000` and `3001` differ, stop both and restart cleanly.
+- `.env.local` changes require a full server restart.
+- `.env.local` should not be committed.
+
+### Debug Diagnostics
+
+Development-only non-secret diagnostics are available at:
+
+- `/api/debug/verifytw`
+
+This endpoint returns:
+- `NODE_ENV`
+- whether MOEA live lookup is enabled
+- whether Resend intake env vars are configured
+- current timestamp
+- app mode: `live-enabled` or `mock-only`
+- MOEA endpoint hostnames
+- BAN lookup and keyword lookup timeout values
+
+The debug endpoint is only available in development unless:
+
+- `VERIFYTW_DEBUG_ENABLED=true`
+
 ### Known Limitations
 
 - Live keyword search currently uses the MOEA company dataset only, so `商業` and `分公司` live results are not yet covered.
@@ -182,6 +227,23 @@ DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>
 - The MOEA response currently maps to the existing company/search shape; it does not yet include pagination, exact-name matching, tax cross-checks, or caching.
 - English company names are not provided by the current MOEA BAN endpoint, so live records may omit that field.
 - Public-data availability and response times depend on the external MOEA source.
+
+### Manual QA Checklist
+
+- `/company/20828393`
+  - Expected: live MOEA company detail if source responds
+- `/company/12345678`
+  - Expected: mock fallback/demo data if live disabled or mock exists
+- `/search?q=台積電`
+  - Expected: alias path or timeout/clear state
+- `/search?q=台灣積體電路製造股份有限公司`
+  - Expected: live result if MOEA responds in time
+- `/search?q=notarealcompanyxyz`
+  - Expected: calm zero-results state
+- `/deeper-check`
+  - Expected: form validates; server submission requires Resend env vars
+- `/api/debug/verifytw`
+  - Expected: non-secret diagnostics in development
 
 ## Project Structure
 

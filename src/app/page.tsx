@@ -61,13 +61,22 @@ export default function Home() {
               placeholder="輸入公司名稱、統一編號或負責人"
             />
             <p className="mt-md text-sm text-neutral-700 text-center">
+              建議優先使用統一編號查詢，結果通常更準確。
+            </p>
+            <p className="mt-xs text-xs text-neutral-600 text-center">
+              For best results, use the 8-digit Business ID.
+            </p>
+            <p className="mt-sm text-sm text-neutral-700 text-center">
               可輸入公司名稱、統一編號、負責人或英文名稱
             </p>
             <p className="mt-xs text-xs text-neutral-600 text-center">
               Company name, Business ID, or representative
             </p>
             <p className="mt-xs text-xs text-neutral-600 text-center">
-              Use the registered company name or 8-digit Business ID for best results.
+              建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
+            </p>
+            <p className="mt-xs text-xs text-neutral-600 text-center">
+              Use the registered company name or 8-digit Business ID.
             </p>
           </div>
 

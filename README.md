@@ -49,6 +49,9 @@ It does not provide a full English mode yet.
 - **MOEA Lookup Spike**:
   - `/company/[ban]` attempts a live MOEA company-registration lookup first, then falls back to mock data
   - `/search?q=...` attempts a live MOEA company keyword search first, then falls back to mock/local results
+  - keyword search depends on MOEA response speed and registered company names
+  - Business ID lookup is usually more reliable than keyword search
+  - alias/common-name expansion is limited and shown transparently in the UI
 - **Deeper Check Flow**: Validated intake form with server-side submission and Email fallback
 - **TODO Comments**: Placeholders for pagination, exact matching, MOF cross-checks, and caching
 
@@ -173,6 +176,9 @@ DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>
 
 - Live keyword search currently uses the MOEA company dataset only, so `商業` and `分公司` live results are not yet covered.
 - The keyword endpoint is currently filtered to `Company_Status eq 01`, which favors active company registrations.
+- Live keyword search depends on the external MOEA response speed; slow upstream responses can trigger a timeout state.
+- Full registered company names and 8-digit Business IDs are more reliable than short aliases.
+- Alias mapping is intentionally limited and is disclosed in the search UI when used.
 - The MOEA response currently maps to the existing company/search shape; it does not yet include pagination, exact-name matching, tax cross-checks, or caching.
 - English company names are not provided by the current MOEA BAN endpoint, so live records may omit that field.
 - Public-data availability and response times depend on the external MOEA source.

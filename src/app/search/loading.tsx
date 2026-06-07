@@ -16,9 +16,9 @@ export default function SearchLoading() {
           </div>
 
           <div className="mt-lg rounded-base border-2 border-civic-blue bg-support-blue-gray p-lg">
-            <p className="text-sm text-main-ink">正在查詢公開資料，可能需要幾秒鐘。</p>
+            <p className="text-sm text-main-ink">正在查詢公開資料…</p>
             <p className="mt-xs text-xs text-neutral-600">
-              Looking up public records. This can take a few seconds.
+              Searching public records…
             </p>
           </div>
         </div>

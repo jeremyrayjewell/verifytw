@@ -48,7 +48,7 @@ export interface MoeaLookupResult {
 
 export interface MoeaKeywordSearchResult {
   companies: Company[];
-  state: 'found' | 'not_found' | 'unavailable' | 'parse_error';
+  state: 'found' | 'not_found' | 'unavailable' | 'timeout' | 'parse_error';
   message?: string;
 }
 
@@ -410,7 +410,22 @@ export async function searchMoeaCompaniesByKeyword(query: string): Promise<MoeaK
       companies,
       state: 'found',
     };
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      logMoeaKeywordDebug({
+        classification: 'unavailable',
+        url: requestUrl,
+        preview: '',
+        parsedResultCount: 0,
+      });
+
+      return {
+        companies: [],
+        state: 'timeout',
+        message: '即時公開資料回應較慢，請稍後再試，或改用統一編號查詢。',
+      };
+    }
+
     logMoeaKeywordDebug({
       classification: 'unavailable',
       url: requestUrl,

@@ -68,14 +68,20 @@ export function SearchResultsControls({
         isLoading={isPending}
       />
       <p className="mt-md text-sm text-neutral-700">
+        建議優先使用統一編號查詢，結果通常更準確。
+      </p>
+      <p className="mt-xs text-xs text-neutral-600">
+        For best results, use the 8-digit Business ID.
+      </p>
+      <p className="mt-md text-sm text-neutral-700">
         建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
       </p>
       <p className="mt-xs text-xs text-neutral-600">
-        Use the registered company name or 8-digit Business ID for best results.
+        Use the registered company name or 8-digit Business ID, for example &quot;Taiwan Semiconductor Manufacturing Co., Ltd.&quot;
       </p>
       {isPending && (
         <p className="mt-sm text-sm text-neutral-600" aria-live="polite">
-          正在查詢公開資料，可能需要幾秒鐘。
+          正在查詢公開資料… Searching public records…
         </p>
       )}
 

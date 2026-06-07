@@ -6,10 +6,20 @@ import type { Company, SearchFilter } from '@/types/company';
 export interface CompanySearchResult {
   companies: Company[];
   dataState: 'live' | 'mock' | 'fallback_mock' | 'no_results' | 'invalid_query';
+  resultState:
+    | 'live_success'
+    | 'live_timeout'
+    | 'live_zero_results'
+    | 'fallback_mock'
+    | 'mock'
+    | 'invalid_query'
+    | 'live_unavailable'
+    | 'parse_error';
   query: string;
   filterType: SearchFilter;
   apiMessage?: string;
   helperText?: string;
+  searchNotes?: string[];
 }
 
 const COMPANY_NAME_ALIAS_MAP: Record<string, string> = {
@@ -20,29 +30,51 @@ const COMPANY_NAME_ALIAS_MAP: Record<string, string> = {
 
 const COMPANY_NAME_SUFFIXES = ['股份有限公司', '有限公司', '公司'] as const;
 
-function normalizeLiveKeywordQuery(query: string): string {
-  // TODO: Expand alias coverage carefully with audited mappings only.
-  return COMPANY_NAME_ALIAS_MAP[query] ?? query;
+interface LiveKeywordCandidate {
+  query: string;
+  notes: string[];
 }
 
-function buildLiveKeywordCandidates(query: string): string[] {
-  const candidates = new Set<string>();
-  const normalized = normalizeLiveKeywordQuery(query);
+function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
+  const candidates: LiveKeywordCandidate[] = [];
+  const seen = new Set<string>();
+  const mapped = COMPANY_NAME_ALIAS_MAP[query];
+  const normalized = mapped ?? query;
 
-  if (normalized) {
-    candidates.add(normalized);
+  const pushCandidate = (candidateQuery: string, notes: string[]) => {
+    if (!candidateQuery || seen.has(candidateQuery)) {
+      return;
+    }
+
+    seen.add(candidateQuery);
+    candidates.push({
+      query: candidateQuery,
+      notes,
+    });
+  };
+
+  if (mapped) {
+    pushCandidate(mapped, [
+      `已使用常見簡稱對應查詢：「${query}」→「${mapped}」`,
+      'Used a known common-name mapping.',
+    ]);
+  } else {
+    pushCandidate(normalized, []);
   }
 
   for (const suffix of COMPANY_NAME_SUFFIXES) {
     if (normalized.endsWith(suffix)) {
       const stripped = normalized.slice(0, -suffix.length).trim();
       if (stripped.length >= 2) {
-        candidates.add(stripped);
+        pushCandidate(stripped, [
+          '已嘗試使用較寬鬆的公司名稱查詢。',
+          'Tried a broader company-name search.',
+        ]);
       }
     }
   }
 
-  return Array.from(candidates);
+  return candidates;
 }
 
 function logSearchClassification(details: {
@@ -84,6 +116,7 @@ export async function getSearchResults(
     return {
       companies: [],
       dataState: 'invalid_query',
+      resultState: 'invalid_query',
       query: rawQuery.trim(),
       filterType,
       apiMessage: parsedQuery.error.issues[0]?.message,
@@ -91,8 +124,7 @@ export async function getSearchResults(
   }
 
   const query = parsedQuery.data.query;
-  const liveQueries = buildLiveKeywordCandidates(query);
-  const primaryLiveQuery = liveQueries[0] ?? query;
+  const liveCandidates = buildLiveKeywordCandidates(query);
   const mockResults = searchCompanies(query, filterType);
   const isBusinessIdSearch = validateBan(query).success;
 
@@ -107,39 +139,46 @@ export async function getSearchResults(
     return {
       companies: mockResults,
       dataState: mockResults.length > 0 ? 'mock' : 'no_results',
+      resultState: mockResults.length > 0 ? 'mock' : 'live_zero_results',
       query,
       filterType,
       helperText:
         mockResults.length > 0
           ? undefined
-          : '建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。',
+          : '沒有找到相符的公司登記公開資料。',
+      searchNotes:
+        mockResults.length > 0
+          ? ['建議優先使用統一編號查詢，結果通常更準確。', 'For best results, use the 8-digit Business ID.']
+          : [
+              '建議優先使用統一編號查詢，結果通常更準確。',
+              'For best results, use the 8-digit Business ID.',
+            ],
     };
   }
 
   let liveResult = null as Awaited<ReturnType<typeof searchMoeaCompaniesByKeyword>> | null;
-  let matchedLiveQuery = primaryLiveQuery;
+  let matchedCandidate = liveCandidates[0] ?? { query, notes: [] };
 
-  for (const candidate of liveQueries) {
-    const candidateResult = await searchMoeaCompaniesByKeyword(candidate);
+  for (const candidate of liveCandidates) {
+    const candidateResult = await searchMoeaCompaniesByKeyword(candidate.query);
     liveResult = candidateResult;
+    matchedCandidate = candidate;
 
     if (candidateResult.state === 'found') {
-      matchedLiveQuery = candidate;
       break;
     }
 
     if (
       candidateResult.state === 'unavailable' ||
+      candidateResult.state === 'timeout' ||
       candidateResult.state === 'parse_error'
     ) {
-      matchedLiveQuery = candidate;
       break;
     }
   }
 
   if (liveResult?.state === 'found') {
     const companies = sortAndFilterCompanies(liveResult.companies, filterType);
-    const usedApproximateMatch = query !== matchedLiveQuery;
 
     logSearchClassification({
       query,
@@ -151,11 +190,14 @@ export async function getSearchResults(
     return {
       companies,
       dataState: 'live',
+      resultState: 'live_success',
       query,
       filterType,
-      helperText: usedApproximateMatch
-        ? `已改用較接近的公司登記名稱查詢：「${matchedLiveQuery}」。`
-        : undefined,
+      searchNotes: [
+        '建議優先使用統一編號查詢，結果通常更準確。',
+        'For best results, use the 8-digit Business ID.',
+        ...matchedCandidate.notes,
+      ],
     };
   }
 
@@ -168,11 +210,16 @@ export async function getSearchResults(
   }
 
   if (mockResults.length > 0) {
+    const isFallbackState =
+      liveResult.state === 'unavailable' ||
+      liveResult.state === 'timeout' ||
+      liveResult.state === 'parse_error';
+
     logSearchClassification({
       query,
       filterType,
       classification:
-        liveResult.state === 'unavailable'
+        isFallbackState
           ? 'fallback'
           : liveResult.state === 'parse_error'
             ? 'parse-error'
@@ -182,28 +229,24 @@ export async function getSearchResults(
 
     return {
       companies: mockResults,
-      dataState:
-        liveResult.state === 'unavailable' || liveResult.state === 'parse_error'
-          ? 'fallback_mock'
-          : 'mock',
+      dataState: isFallbackState ? 'fallback_mock' : 'mock',
+      resultState: isFallbackState ? 'fallback_mock' : 'mock',
       query,
       filterType,
-      apiMessage:
-        liveResult.state === 'unavailable' || liveResult.state === 'parse_error'
-          ? liveResult.message
-          : undefined,
-      helperText:
-        query !== matchedLiveQuery
-          ? `即時公開資料未回傳結果，以下先顯示示範資料；已嘗試使用較接近的公司登記名稱「${matchedLiveQuery}」查詢。`
-          : undefined,
+      apiMessage: isFallbackState ? liveResult.message : undefined,
+      searchNotes: [
+        '建議優先使用統一編號查詢，結果通常更準確。',
+        'For best results, use the 8-digit Business ID.',
+        ...matchedCandidate.notes,
+      ],
     };
   }
 
   logSearchClassification({
-    query,
-    filterType,
-    classification:
-      liveResult.state === 'unavailable'
+      query,
+      filterType,
+      classification:
+      liveResult.state === 'unavailable' || liveResult.state === 'timeout'
         ? 'unavailable'
         : liveResult.state === 'parse_error'
           ? 'parse-error'
@@ -214,12 +257,27 @@ export async function getSearchResults(
   return {
     companies: [],
     dataState: 'no_results',
+    resultState:
+      liveResult.state === 'timeout'
+        ? 'live_timeout'
+        : liveResult.state === 'unavailable'
+          ? 'live_unavailable'
+          : liveResult.state === 'parse_error'
+            ? 'parse_error'
+            : 'live_zero_results',
     query,
     filterType,
     apiMessage: liveResult.message,
     helperText:
       liveResult.state === 'not_found'
         ? '可能原因包括：使用了簡稱、登記名稱不同、資料尚未更新，或目前查詢範圍尚未涵蓋。建議改用完整公司登記名稱或統一編號查詢。'
-        : undefined,
+        : liveResult.state === 'timeout'
+          ? '建議稍後再試，或直接改用 8 碼統一編號查詢。'
+          : undefined,
+    searchNotes: [
+      '建議優先使用統一編號查詢，結果通常更準確。',
+      'For best results, use the 8-digit Business ID.',
+      ...matchedCandidate.notes,
+    ],
   };
 }

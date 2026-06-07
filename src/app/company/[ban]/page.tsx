@@ -221,7 +221,15 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
             </NoticeBox>
           </div>
 
-          <DeeperCheckCTA />
+          <div className="space-y-md">
+            <p className="text-sm text-neutral-700">
+              如果你需要比對對方提供的網站、Email、合約、付款資訊或其他文件，可申請人工查證。
+            </p>
+            <p className="text-xs text-neutral-600">
+              If you need to compare public records with a website, email, contract, payment details, or other documents, request a manual check.
+            </p>
+            <DeeperCheckCTA />
+          </div>
 
           <div className="pt-lg border-t-2 border-form-gray">
             <h3 className="text-lg font-semibold text-main-ink mb-lg">延伸參考</h3>

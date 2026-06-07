@@ -464,6 +464,13 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 - No payment system is implemented yet; payment remains manual and out of scope for this MVP
 - This flow exists to validate demand for a paid/manual deeper-check service before building a larger platform
 
+### Manual Deeper-check Offer
+
+- The deeper-check offer is manual and still in the validation stage
+- The free lookup gives public-record fields plus an initial summary
+- The manual deeper check adds human context, comparison against the details the user provides, and next-step confirmation notes
+- Payment remains manual after scope confirmation; there is no online checkout yet
+
 ### Local Development Without Resend
 
 You can run the app locally without configuring Resend.

@@ -194,6 +194,40 @@ function isKeywordPayloadParseable(payload: unknown): boolean {
   return Array.isArray(payload) || Boolean(payload && typeof payload === 'object' && Array.isArray((payload as { value?: unknown[] }).value));
 }
 
+function isKnownNoDataPayload(payload: unknown): boolean {
+  if (Array.isArray(payload)) {
+    return payload.length === 0;
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return false;
+  }
+
+  const record = payload as {
+    value?: unknown[];
+    data?: unknown[];
+    total?: number | string;
+    count?: number | string;
+    message?: string;
+    msg?: string;
+  };
+
+  if (Array.isArray(record.value) && record.value.length === 0) {
+    return true;
+  }
+
+  if (Array.isArray(record.data) && record.data.length === 0) {
+    return true;
+  }
+
+  if (String(record.total ?? '').trim() === '0' || String(record.count ?? '').trim() === '0') {
+    return true;
+  }
+
+  const combinedMessage = `${String(record.message ?? '')} ${String(record.msg ?? '')}`.trim();
+  return /(查無資料|查無符合|無符合|無資料|no data|not found)/i.test(combinedMessage);
+}
+
 function logMoeaKeywordDebug(details: {
   classification: 'live-success' | 'zero-results' | 'fallback' | 'timeout' | 'unavailable' | 'parse-error';
   originalQuery?: string;
@@ -474,6 +508,28 @@ export async function searchMoeaCompaniesByKeyword(
     const contentType = response.headers.get('content-type');
     const rawText = await response.text();
     const preview = rawText.slice(0, 500);
+    const trimmedRawText = rawText.trim();
+
+    if (response.status === 204 || trimmedRawText.length === 0) {
+      logMoeaKeywordDebug({
+        classification: 'zero-results',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
+        url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 0,
+      });
+
+      return {
+        companies: [],
+        state: 'not_found',
+        message: '沒有找到相符的公司登記公開資料。',
+      };
+    }
 
     if (!response.ok) {
       logMoeaKeywordDebug({
@@ -498,7 +554,7 @@ export async function searchMoeaCompaniesByKeyword(
 
     let payload: unknown;
     try {
-      payload = JSON.parse(rawText) as unknown;
+      payload = JSON.parse(trimmedRawText) as unknown;
     } catch {
       logMoeaKeywordDebug({
         classification: 'parse-error',
@@ -516,7 +572,28 @@ export async function searchMoeaCompaniesByKeyword(
       return {
         companies: [],
         state: 'parse_error',
-        message: '公開資料格式暫時無法解析。',
+        message: '公開資料回應格式暫時無法讀取。',
+      };
+    }
+
+    if (isKnownNoDataPayload(payload)) {
+      logMoeaKeywordDebug({
+        classification: 'zero-results',
+        originalQuery: debugMeta?.originalQuery,
+        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
+        broaderQuery: debugMeta?.broaderQuery,
+        url: requestUrl,
+        timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
+        responseStatus: response.status,
+        contentType,
+        preview,
+        parsedResultCount: 0,
+      });
+
+      return {
+        companies: [],
+        state: 'not_found',
+        message: '沒有找到相符的公司登記公開資料。',
       };
     }
 
@@ -537,7 +614,7 @@ export async function searchMoeaCompaniesByKeyword(
       return {
         companies: [],
         state: 'parse_error',
-        message: '公開資料格式暫時無法解析。',
+        message: '公開資料回應格式暫時無法讀取。',
       };
     }
 

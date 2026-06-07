@@ -153,7 +153,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   searchResult?.resultState === 'live_timeout'
                     ? '即時公開資料回應較慢'
                     : searchResult?.resultState === 'parse_error'
-                      ? '公開資料暫時無法解析'
+                      ? '公開資料回應格式暫時無法讀取'
                       : searchResult?.resultState === 'live_zero_results'
                         ? '沒有找到相符的公司登記公開資料'
                         : searchResult?.resultState === 'live_unavailable'
@@ -165,6 +165,8 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     ? '可能原因包括：使用了簡稱、登記名稱不同、資料尚未更新，或目前查詢範圍尚未涵蓋。'
                     : searchResult?.resultState === 'live_timeout'
                       ? '建議稍後再試，或直接改用 8 碼統一編號查詢。'
+                      : searchResult?.resultState === 'parse_error'
+                        ? '請稍後再試，或改用統一編號查詢。'
                       : searchResult?.helperText ??
                         '請確認公司名稱、統一編號或負責人是否正確。'
                 }

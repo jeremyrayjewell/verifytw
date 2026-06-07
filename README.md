@@ -469,6 +469,9 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 - The deeper-check offer is manual and still in the validation stage
 - The free lookup gives public-record fields plus an initial summary
 - The manual deeper check adds human context, comparison against the details the user provides, and next-step confirmation notes
+- Basic Record Check means one entity plus short interpretation of what the public record does and does not show
+- Context Check means one situation plus comparison against user-provided details such as a website, email, contract, message, rental details, or payment information
+- Arrival Shortlist means brief checks for up to 5 entities; it is not five full Context Check reports
 - Payment remains manual after scope confirmation; there is no online checkout yet
 
 ### Local Development Without Resend

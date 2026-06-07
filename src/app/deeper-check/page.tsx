@@ -34,6 +34,7 @@ export default function DeeperCheckPage() {
                 <li>顯示經濟部公司登記公開資料</li>
                 <li>提供基本查證摘要</li>
                 <li>適合快速初步確認</li>
+                <li>不會比對你提供的網站、Email、合約、付款資訊或訊息內容</li>
               </ul>
             </div>
 
@@ -41,10 +42,10 @@ export default function DeeperCheckPage() {
               <h3 className="text-lg font-semibold text-main-ink mb-md">人工查證</h3>
               <p className="text-xs text-neutral-600 mb-md">Manual deeper check</p>
               <ul className="space-y-sm text-sm text-neutral-700">
-                <li>由人工整理你提供的情境與資料</li>
-                <li>可比對公司名稱、統一編號、網站、Email、合約或訊息內容</li>
-                <li>可針對雇主、招募者、租屋仲介、客戶或交易對象提供重點整理</li>
-                <li>提供下一步確認建議</li>
+                <li>人工閱讀你提供的情境與資料</li>
+                <li>比對公開資料與你提供的網站、Email、合約、付款資訊或訊息內容</li>
+                <li>整理相符、部分相符與待確認項目</li>
+                <li>提供下一步問題或文件清單</li>
                 <li>付款方式會在確認範圍後以 Email 提供</li>
               </ul>
             </div>
@@ -112,25 +113,35 @@ export default function DeeperCheckPage() {
 
           <div className="grid gap-lg md:grid-cols-3">
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <h3 className="text-lg font-semibold text-main-ink mb-sm">Basic Check — US$19</h3>
+              <h3 className="text-lg font-semibold text-main-ink mb-sm">基本登記查證 — US$19</h3>
+              <p className="text-xs text-neutral-600 mb-md">Basic Record Check</p>
+              <p className="text-sm text-neutral-700 mb-md">
+                單一公司、雇主或招募者的公開登記資料解讀。適合你已經有一個公司名稱或統一編號，想確認公開資料代表什麼。
+              </p>
               <ul className="space-y-sm text-sm text-neutral-700">
-                <li>單一公司、雇主或招募者</li>
-                <li>公開登記資料整理</li>
-                <li>狀態、地址、負責人、資本額摘要</li>
-                <li>需要再確認的項目</li>
+                <li>單一查證對象</li>
+                <li>公開登記資料整理與簡短解讀</li>
+                <li>說明該紀錄能證明什麼、不能證明什麼</li>
+                <li>比對你提供的名稱、連結或雇主資訊是否相符</li>
+                <li>3–5 個建議再確認的問題</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
-                One company, employer, or recruiter. Public-record summary plus items to confirm.
+                One company, employer, or recruiter. Short public-record interpretation plus 3–5 items to confirm.
               </p>
             </div>
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <h3 className="text-lg font-semibold text-main-ink mb-sm">Deal Check — US$39</h3>
+              <h3 className="text-lg font-semibold text-main-ink mb-sm">情境比對查證 — US$39</h3>
+              <p className="text-xs text-neutral-600 mb-md">Context Check</p>
+              <p className="text-sm text-neutral-700 mb-md">
+                針對一個具體情境進行人工比對，例如工作邀約、招募訊息、租屋聯絡、合作對象、客戶或付款資訊。
+              </p>
               <ul className="space-y-sm text-sm text-neutral-700">
-                <li>單一交易、租屋、合作或客戶情境</li>
-                <li>比對你提供的名稱、網站、Email、訊息或付款資訊</li>
+                <li>單一情境或交易對象</li>
+                <li>比對公司名稱、統一編號、網站、Email、訊息、合約或付款資訊</li>
                 <li>整理相符、部分相符與待確認項目</li>
-                <li>提供下一步問題清單</li>
+                <li>說明公開資料與你提供的資訊是否一致</li>
+                <li>提供下一步問題與文件確認清單</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
                 One deal/context check with comparison against the details you provide.
@@ -138,17 +149,37 @@ export default function DeeperCheckPage() {
             </div>
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <h3 className="text-lg font-semibold text-main-ink mb-sm">Taiwan Arrival Bundle — US$79</h3>
+              <h3 className="text-lg font-semibold text-main-ink mb-sm">來台前候選清單查證 — US$79</h3>
+              <p className="text-xs text-neutral-600 mb-md">Arrival Shortlist</p>
+              <p className="text-sm text-neutral-700 mb-md">
+                適合即將來台工作、租屋或合作的人，快速比較最多 5 個查證對象。
+              </p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>最多 5 個查證對象</li>
-                <li>適合來台前比較雇主、租屋仲介、服務商或合作對象</li>
-                <li>每個對象提供簡短摘要與待確認項目</li>
+                <li>每個對象提供簡短公開資料摘要</li>
+                <li>每個對象列出主要待確認項目</li>
                 <li>協助排序哪些對象最需要進一步確認</li>
+                <li>適合雇主、租屋仲介、服務商或合作對象的初步比較</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
-                Up to 5 checks for people preparing to work, rent, or do business in Taiwan.
+                Brief checks for up to 5 Taiwan employers, agents, vendors, or contacts. Not five full context reports.
               </p>
             </div>
+          </div>
+
+          <div className="space-y-sm rounded-base border border-form-gray bg-support-blue-gray p-lg">
+            <p className="text-sm text-neutral-700">
+              這些方案目前是人工查證服務測試。付款方式會在確認範圍後以 Email 提供。
+            </p>
+            <p className="text-xs text-neutral-600">
+              Manual check services are currently in validation. Payment instructions are provided by email after scope confirmation.
+            </p>
+            <p className="text-sm text-neutral-700">
+              US$79 的來台前候選清單查證為簡短比較，不等於 5 份完整情境比對查證。
+            </p>
+            <p className="text-xs text-neutral-600">
+              The US$79 Arrival Shortlist is a brief comparison, not five full Context Checks.
+            </p>
           </div>
         </section>
 

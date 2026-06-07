@@ -467,6 +467,7 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 ### Manual Deeper-check Offer
 
 - The deeper-check offer is manual and still in the validation stage
+- `/deeper-check` has stronger bilingual support than the rest of the app because it is the manual-service validation page for potential paying users
 - The free lookup gives public-record fields plus an initial summary
 - The manual deeper check adds human context, comparison against the details the user provides, and next-step confirmation notes
 - Basic Record Check means one entity plus short interpretation of what the public record does and does not show

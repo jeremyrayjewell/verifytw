@@ -152,18 +152,13 @@ export function DeeperCheckForm() {
 
   return (
     <div className="space-y-xl">
-      <NoticeBox type="info" title="目前送出方式">
-        <div className="space-y-sm">
-          <p>目前此表單會直接送出查證申請。若送出失敗，你仍可使用 Email 備用方式聯絡我們。</p>
-          <p className="text-xs text-neutral-600">若送出失敗，頁面會提供 Email 備用方式。</p>
-        </div>
-      </NoticeBox>
-
       {isSuccess && (
         <NoticeBox type="success" title="已收到你的查證申請">
           <div className="space-y-sm">
             <p>已收到你的查證申請。我們會先確認需求與範圍，再回覆下一步。</p>
-            <p className="text-xs text-neutral-700">Your request has been received. We’ll review the scope and reply with next steps.</p>
+            <p className="text-xs text-neutral-700">
+              Your request has been received. We&apos;ll review the scope and reply with next steps.
+            </p>
           </div>
         </NoticeBox>
       )}
@@ -172,7 +167,7 @@ export function DeeperCheckForm() {
         <NoticeBox type="warning" title="送出未完成">
           <div className="space-y-sm">
             <p>{serverError}</p>
-            <p className="text-xs text-neutral-700">We couldn’t submit your request right now.</p>
+            <p className="text-xs text-neutral-700">We couldn&apos;t submit your request right now.</p>
             <a
               href={fallbackMailto}
               className="inline-flex items-center text-civic-blue font-medium hover:underline focus-ring rounded-base"
@@ -183,7 +178,20 @@ export function DeeperCheckForm() {
         </NoticeBox>
       )}
 
-      <form onSubmit={handleSubmit} className="rounded-base border-2 border-form-gray bg-surface p-xl md:p-2xl space-y-lg" noValidate>
+      <form
+        onSubmit={handleSubmit}
+        className="rounded-base border-2 border-form-gray bg-surface p-xl md:p-2xl space-y-lg"
+        noValidate
+      >
+        <div className="space-y-xs">
+          <p className="text-sm text-neutral-600">
+            送出後不會開啟 Email 應用程式；若送出失敗，頁面會提供 Email 備用方式。
+          </p>
+          <p className="text-xs text-neutral-600">
+            The form submits directly. If submission fails, an email fallback will be shown.
+          </p>
+        </div>
+
         <div className="hidden" aria-hidden="true">
           <Input
             label="Company website"
@@ -193,6 +201,7 @@ export function DeeperCheckForm() {
             onChange={(event) => updateField('companyWebsite', event.target.value)}
           />
         </div>
+
         <div className="grid gap-lg md:grid-cols-2">
           <Input
             label="姓名 / Name"
@@ -273,10 +282,6 @@ export function DeeperCheckForm() {
           申請進一步查證
         </Button>
       </form>
-
-      <p className="text-sm text-neutral-600">
-        送出後不會開啟你的 Email 應用程式；只有在送出失敗時，才會提供 Email 備用方式。
-      </p>
     </div>
   );
 }

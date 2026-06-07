@@ -5,25 +5,24 @@ export default function DeeperCheckPage() {
     <div className="min-h-screen bg-surface py-2xl px-lg">
       <div className="max-w-4xl mx-auto space-y-2xl">
         <section className="rounded-base border-2 border-form-gray bg-rice-paper p-xl md:p-2xl">
-          <p className="text-sm font-medium text-data-teal-text mb-sm">Request a deeper check</p>
           <h1 className="text-3xl md:text-4xl font-bold text-main-ink mb-md">
             申請進一步查證
           </h1>
           <p className="text-sm text-neutral-600 mb-md">Request a deeper check</p>
-          <p className="text-base text-neutral-700 leading-relaxed">
-            提供公司名稱、統一編號、網站、Email、合約內容或相關資訊，我們會協助整理公開資料，
-            並說明哪些資訊相符、哪些仍需要你進一步確認。
-          </p>
+          <div className="space-y-sm">
+            <p className="text-base text-neutral-700 leading-relaxed">
+              提供公司名稱、統一編號、網站、Email、合約或相關資訊。我們會協助整理公開資料，並說明哪些資訊相符、哪些仍需要確認。
+            </p>
+            <p className="text-sm text-neutral-600 leading-relaxed">
+              Submit a company name, Business ID, website, email, contract, or related details.
+              We&apos;ll review public records and explain what matches, what is unclear, and what to confirm next.
+            </p>
+          </div>
         </section>
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl md:p-2xl space-y-lg">
-          <div>
-            <h2 className="text-2xl font-bold text-main-ink">人工查證服務測試中</h2>
-            <p className="mt-sm text-base text-neutral-700 leading-relaxed">
-              VerifyTW 目前正在測試人工查證需求。若你需要比免費查詢更完整的情境式整理，
-              我們會先以 Email 確認需求、範圍與價格，再提供付款方式與後續安排。
-            </p>
-          </div>
+          <h2 className="text-2xl font-bold text-main-ink">免費查詢與人工查證</h2>
+          <p className="text-sm text-neutral-600">Free lookup vs manual deeper check</p>
 
           <div className="grid gap-lg md:grid-cols-2">
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
@@ -31,11 +30,13 @@ export default function DeeperCheckPage() {
               <p className="text-xs text-neutral-600 mb-md">Free lookup</p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>即時查詢單一公司或統一編號</li>
-                <li>顯示經濟部公司登記公開資料</li>
+                <li>顯示公開登記欄位</li>
                 <li>提供基本查證摘要</li>
-                <li>適合快速初步確認</li>
-                <li>不會比對你提供的網站、Email、合約、付款資訊或訊息內容</li>
+                <li>不比對外部文件、網站、Email、付款資訊或訊息</li>
               </ul>
+              <p className="mt-md text-xs text-neutral-600">
+                Instant public-record lookup for one company or Business ID. Does not compare outside documents or messages.
+              </p>
             </div>
 
             <div className="rounded-base border border-civic-blue bg-support-blue-gray p-lg">
@@ -43,11 +44,13 @@ export default function DeeperCheckPage() {
               <p className="text-xs text-neutral-600 mb-md">Manual deeper check</p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>人工閱讀你提供的情境與資料</li>
-                <li>比對公開資料與你提供的網站、Email、合約、付款資訊或訊息內容</li>
+                <li>比對公開資料與網站、Email、合約、付款資訊或訊息</li>
                 <li>整理相符、部分相符與待確認項目</li>
-                <li>提供下一步問題或文件清單</li>
-                <li>付款方式會在確認範圍後以 Email 提供</li>
+                <li>提供下一步確認問題或文件清單</li>
               </ul>
+              <p className="mt-md text-xs text-neutral-600">
+                Human review of your context and materials, with matched / partially matched / still-to-confirm items.
+              </p>
             </div>
           </div>
         </section>
@@ -58,48 +61,50 @@ export default function DeeperCheckPage() {
             <p className="text-sm text-neutral-600 mt-sm">What you get</p>
           </div>
 
-          <div className="grid gap-lg md:grid-cols-2">
+          <div className="grid gap-md md:grid-cols-2">
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink mb-sm">公開資料摘要</p>
-              <p className="text-sm text-neutral-700">
-                整理查詢對象的公司登記資訊、狀態、地址、負責人、資本額與更新日期。
+              <p className="text-sm font-semibold text-main-ink">
+                公開資料摘要 / Public-record summary
               </p>
-              <p className="text-xs text-neutral-600 mt-sm">
-                Public-record summary of registration status, address, representative, capital, and update date.
+              <p className="mt-sm text-sm text-neutral-700">公司狀態、地址、負責人、資本額與更新日期。</p>
+              <p className="text-xs text-neutral-600 mt-xs">
+                Registration status, address, representative, capital, and update date.
               </p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink mb-sm">來源連結與查詢依據</p>
-              <p className="text-sm text-neutral-700">
-                標示使用的公開資料來源、查詢時間與整理依據。
+              <p className="text-sm font-semibold text-main-ink">
+                來源與查詢依據 / Sources and lookup basis
               </p>
-              <p className="text-xs text-neutral-600 mt-sm">Source links and lookup basis.</p>
+              <p className="mt-sm text-sm text-neutral-700">標示使用的公開資料來源與查詢時間。</p>
+              <p className="text-xs text-neutral-600 mt-xs">Source used and lookup time.</p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink mb-sm">相符與待確認項目</p>
-              <p className="text-sm text-neutral-700">
-                說明哪些資訊與公開資料一致，哪些仍需要交叉確認。
+              <p className="text-sm font-semibold text-main-ink">
+                相符與待確認項目 / Matches and items to confirm
               </p>
-              <p className="text-xs text-neutral-600 mt-sm">
-                What matches public records and what still needs checking.
+              <p className="mt-sm text-sm text-neutral-700">說明哪些資訊一致、哪些仍需交叉確認。</p>
+              <p className="text-xs text-neutral-600 mt-xs">
+                What matches and what still needs cross-checking.
               </p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink mb-sm">情境式說明</p>
-              <p className="text-sm text-neutral-700">
-                依照你的情境整理重點，例如雇主、招募者、租屋仲介、客戶或交易對象。
+              <p className="text-sm font-semibold text-main-ink">
+                情境式說明 / Context-specific notes
               </p>
-              <p className="text-xs text-neutral-600 mt-sm">
-                Context-specific notes for employers, recruiters, rental agents, clients, or business partners.
+              <p className="mt-sm text-sm text-neutral-700">
+                依照雇主、招募者、租屋仲介、客戶或交易對象情境整理。
+              </p>
+              <p className="text-xs text-neutral-600 mt-xs">
+                Notes tailored to employers, recruiters, rental agents, clients, or business partners.
               </p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg md:col-span-2">
-              <p className="text-sm font-semibold text-main-ink mb-sm">下一步確認清單</p>
-              <p className="text-sm text-neutral-700">
-                提供你可以向對方確認的問題、建議索取的文件，或值得再次比對的資訊。
+              <p className="text-sm font-semibold text-main-ink">
+                下一步確認清單 / Next-step checklist
               </p>
-              <p className="text-xs text-neutral-600 mt-sm">
-                Suggested next questions or documents to request.
+              <p className="mt-sm text-sm text-neutral-700">建議向對方確認的問題或建議索取的文件。</p>
+              <p className="text-xs text-neutral-600 mt-xs">
+                Questions or documents to request next.
               </p>
             </div>
           </div>
@@ -115,8 +120,11 @@ export default function DeeperCheckPage() {
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">基本登記查證 — US$19</h3>
               <p className="text-xs text-neutral-600 mb-md">Basic Record Check</p>
-              <p className="text-sm text-neutral-700 mb-md">
-                單一公司、雇主或招募者的公開登記資料解讀。適合你已經有一個公司名稱或統一編號，想確認公開資料代表什麼。
+              <p className="text-sm text-neutral-700 mb-sm">
+                單一公司、雇主或招募者的公開登記資料解讀。適合你已經有公司名稱或統一編號，想確認公開資料代表什麼。
+              </p>
+              <p className="text-xs text-neutral-600 mb-md">
+                One company, employer, or recruiter. A short interpretation of what the public record shows and what it does not show.
               </p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>單一查證對象</li>
@@ -126,15 +134,18 @@ export default function DeeperCheckPage() {
                 <li>3–5 個建議再確認的問題</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
-                One company, employer, or recruiter. Short public-record interpretation plus 3–5 items to confirm.
+                Includes a short written summary and 3–5 questions/items to confirm.
               </p>
             </div>
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">情境比對查證 — US$39</h3>
               <p className="text-xs text-neutral-600 mb-md">Context Check</p>
-              <p className="text-sm text-neutral-700 mb-md">
+              <p className="text-sm text-neutral-700 mb-sm">
                 針對一個具體情境進行人工比對，例如工作邀約、招募訊息、租屋聯絡、合作對象、客戶或付款資訊。
+              </p>
+              <p className="text-xs text-neutral-600 mb-md">
+                One real-world situation, such as a job offer, recruiter message, rental contact, client, business partner, or payment detail.
               </p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>單一情境或交易對象</li>
@@ -144,15 +155,18 @@ export default function DeeperCheckPage() {
                 <li>提供下一步問題與文件確認清單</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
-                One deal/context check with comparison against the details you provide.
+                Best for comparing public records against details someone gave you.
               </p>
             </div>
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="text-lg font-semibold text-main-ink mb-sm">來台前候選清單查證 — US$79</h3>
               <p className="text-xs text-neutral-600 mb-md">Arrival Shortlist</p>
-              <p className="text-sm text-neutral-700 mb-md">
+              <p className="text-sm text-neutral-700 mb-sm">
                 適合即將來台工作、租屋或合作的人，快速比較最多 5 個查證對象。
+              </p>
+              <p className="text-xs text-neutral-600 mb-md">
+                For people preparing to work, rent, or do business in Taiwan. Brief checks for up to 5 entities.
               </p>
               <ul className="space-y-sm text-sm text-neutral-700">
                 <li>最多 5 個查證對象</li>
@@ -162,7 +176,7 @@ export default function DeeperCheckPage() {
                 <li>適合雇主、租屋仲介、服務商或合作對象的初步比較</li>
               </ul>
               <p className="text-xs text-neutral-600 mt-md">
-                Brief checks for up to 5 Taiwan employers, agents, vendors, or contacts. Not five full context reports.
+                Brief comparison only. Not five full Context Checks.
               </p>
             </div>
           </div>
@@ -191,29 +205,31 @@ export default function DeeperCheckPage() {
 
           <div className="grid gap-md md:grid-cols-2">
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink">1. 送出申請</p>
-              <p className="text-xs text-neutral-600 mt-xs">Submit your request</p>
+              <p className="text-sm font-semibold text-main-ink">1. 送出申請 / Submit your request</p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink">2. 我們以 Email 確認範圍與價格</p>
-              <p className="text-xs text-neutral-600 mt-xs">We confirm scope and pricing by email</p>
+              <p className="text-sm font-semibold text-main-ink">
+                2. Email 確認範圍與價格 / Confirm scope and pricing by email
+              </p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink">3. 付款後進行人工查證</p>
-              <p className="text-xs text-neutral-600 mt-xs">Manual check begins after payment</p>
+              <p className="text-sm font-semibold text-main-ink">
+                3. 付款後進行人工查證 / Manual check begins after payment
+              </p>
             </div>
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
-              <p className="text-sm font-semibold text-main-ink">4. 以 Email 回覆整理結果</p>
-              <p className="text-xs text-neutral-600 mt-xs">Results are delivered by email</p>
+              <p className="text-sm font-semibold text-main-ink">4. Email 回覆結果 / Results delivered by email</p>
             </div>
           </div>
 
-          <p className="text-sm text-neutral-700">
-            目前付款方式為人工確認後提供，尚未提供線上自動付款。
-          </p>
-          <p className="text-xs text-neutral-600">
-            Payment instructions are provided manually after scope confirmation. Online checkout is not available yet.
-          </p>
+          <div className="space-y-xs">
+            <p className="text-sm text-neutral-700">
+              目前付款方式為人工確認後提供，尚未提供線上自動付款。
+            </p>
+            <p className="text-xs text-neutral-600">
+              Payment instructions are provided manually after scope confirmation. Online checkout is not available yet.
+            </p>
+          </div>
         </section>
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl md:p-2xl space-y-sm">
@@ -221,7 +237,7 @@ export default function DeeperCheckPage() {
             人工查證不代表保證安全，也不構成法律、投資或交易建議。它的目標是協助你理解公開資料，並知道下一步該確認什麼。
           </p>
           <p className="text-xs text-neutral-600">
-            A deeper check does not guarantee safety or provide legal, investment, or transaction advice. It helps you understand public records and what to confirm next.
+            A manual check does not guarantee safety or provide legal, investment, or transaction advice.
           </p>
         </section>
 

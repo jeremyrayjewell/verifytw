@@ -12,6 +12,7 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 
 VerifyTW is designed as a Chinese-first Taiwan public-record tool with concise English helper text for Taiwan users plus English-speaking newcomers, job seekers, freelancers, and remote workers.
 It does not provide a full English mode yet.
+It is an independent project by Jeremy Jewell and is not affiliated with any Taiwan government agency.
 
 ## What's Built
 
@@ -466,13 +467,16 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 
 ### Manual Deeper-check Offer
 
-- The deeper-check offer is manual and still in the validation stage
+- VerifyTW is an independent project by Jeremy Jewell and is not affiliated with any Taiwan government agency
+- The deeper-check offer is manual and currently being tested
 - `/deeper-check` has stronger bilingual support than the rest of the app because it is the manual-service validation page for potential paying users
 - The free lookup gives public-record fields plus an initial summary
 - The manual deeper check adds human context, comparison against the details the user provides, and next-step confirmation notes
 - Basic Record Check means one entity plus short interpretation of what the public record does and does not show
 - Context Check means one situation plus comparison against user-provided details such as a website, email, contract, message, rental details, or payment information
 - Arrival Shortlist means brief checks for up to 5 entities; it is not five full Context Check reports
+- Manual-check prices are introductory validation pricing and may change later based on scope, demand, and processing time
+- Scope, price, and payment method are confirmed by email before work begins
 - Payment remains manual after scope confirmation; there is no online checkout yet
 
 ### Local Development Without Resend

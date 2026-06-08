@@ -23,6 +23,7 @@ It is an independent project by Jeremy Jewell and is not affiliated with any Tai
 - **Data Guide** (`/data`) - What VerifyTW checks, what it does not yet cover
 - **About** (`/about`) - Product explanation and positioning
 - **Deeper Check** (`/deeper-check`) - Lightweight validation request intake
+- **Sample Report** (`/sample-report`) - Demo manual-report format using fictional data
 - **Design System** (`/design-system`) - Internal reference for brand consistency
 
 ### Component Library
@@ -136,6 +137,7 @@ What is working now:
 - mock fallback when live results are unavailable or out of scope
 - a manual deeper-check request flow on `/deeper-check`
 - server-side intake suitable for monetization validation
+- a sample report page at `/sample-report` showing the manual report format with fictional/demo data
 
 What is intentionally not built yet:
 
@@ -464,20 +466,22 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 - Recipient address is controlled by environment variables and is never hardcoded as a real personal email
 - No payment system is implemented yet; payment remains manual and out of scope for this MVP
 - This flow exists to validate demand for a paid/manual deeper-check service before building a larger platform
+- `/sample-report` shows a fictional/demo sample so users can preview the manual report format without implying a claim about any real company
 
 ### Manual Deeper-check Offer
 
 - VerifyTW is an independent project by Jeremy Jewell and is not affiliated with any Taiwan government agency
 - The deeper-check offer is manual and currently being tested
 - `/deeper-check` has stronger bilingual support than the rest of the app because it is the manual-service validation page for potential paying users
+- `/sample-report` exists to show what a manual deeper-check report can look like before a user submits a request
 - The free lookup gives public-record fields plus an initial summary
 - The manual deeper check adds human context, comparison against the details the user provides, and next-step confirmation notes
-- Basic Record Check means one entity plus short interpretation of what the public record does and does not show
-- Context Check means one situation plus comparison against user-provided details such as a website, email, contract, message, rental details, or payment information
-- Arrival Shortlist means brief checks for up to 5 entities; it is not five full Context Check reports
+- Basic Record Check: NT$600 for one entity plus short interpretation of what the public record does and does not show
+- Context Check: NT$1,200 for one situation plus comparison against user-provided details such as a website, email, contract, message, rental details, or payment information
+- Arrival Shortlist: NT$2,500 for brief checks on up to 5 entities; it is not five full Context Check reports
 - Manual-check prices are introductory validation pricing and may change later based on scope, demand, and processing time
 - Scope, price, and payment method are confirmed by email before work begins
-- Payment remains manual after scope confirmation; there is no online checkout yet
+- Payment remains manual after scope confirmation; there is no online checkout yet, and payment method and currency are confirmed by email
 
 ### Local Development Without Resend
 

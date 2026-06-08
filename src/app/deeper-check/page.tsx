@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { DeeperCheckForm } from '@/components/DeeperCheckForm';
 
 export default function DeeperCheckPage() {
@@ -32,6 +33,21 @@ export default function DeeperCheckPage() {
             a government website. Manual checks help organize public records and
             user-provided context, but do not guarantee safety.
           </p>
+        </section>
+
+        <section className="rounded-base border border-form-gray bg-rice-paper p-lg md:p-xl">
+          <div className="flex flex-col gap-md md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-base font-semibold text-main-ink">想先看看報告長什麼樣子？</p>
+              <p className="text-sm text-neutral-600">Want to see what a report looks like?</p>
+            </div>
+            <Link
+              href="/sample-report"
+              className="inline-flex items-center justify-center rounded-base border border-civic-blue px-lg py-sm text-sm font-medium text-civic-blue transition-colors hover:bg-support-blue-gray focus-ring"
+            >
+              查看範例報告
+            </Link>
+          </div>
         </section>
 
         <section className="rounded-base border-2 border-form-gray bg-surface p-xl md:p-2xl space-y-lg">
@@ -135,7 +151,7 @@ export default function DeeperCheckPage() {
           <div className="grid gap-lg md:grid-cols-3">
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="mb-sm text-lg font-semibold text-main-ink">
-                基本登記查證 — US$19
+                基本登記查證 — NT$600
               </h3>
               <p className="mb-md text-xs text-neutral-600">Basic Record Check</p>
               <p className="mb-sm text-sm text-neutral-700">
@@ -159,7 +175,7 @@ export default function DeeperCheckPage() {
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="mb-sm text-lg font-semibold text-main-ink">
-                情境比對查證 — US$39
+                情境比對查證 — NT$1,200
               </h3>
               <p className="mb-md text-xs text-neutral-600">Context Check</p>
               <p className="mb-sm text-sm text-neutral-700">
@@ -183,7 +199,7 @@ export default function DeeperCheckPage() {
 
             <div className="rounded-base border border-form-gray bg-rice-paper p-lg">
               <h3 className="mb-sm text-lg font-semibold text-main-ink">
-                來台前候選清單查證 — US$79
+                來台前候選清單查證 — NT$2,500
               </h3>
               <p className="mb-md text-xs text-neutral-600">Arrival Shortlist</p>
               <p className="mb-sm text-sm text-neutral-700">
@@ -216,10 +232,10 @@ export default function DeeperCheckPage() {
               and processing time.
             </p>
             <p className="text-sm text-neutral-700">
-              US$79 的來台前候選清單查證為簡短比較，不等於 5 份完整情境比對查證。
+              NT$2,500 的來台前候選清單查證為簡短比較，不等於 5 份完整情境比對查證。
             </p>
             <p className="text-xs text-neutral-600">
-              The US$79 Arrival Shortlist is a brief comparison, not five full Context
+              The NT$2,500 Arrival Shortlist is a brief comparison, not five full Context
               Checks.
             </p>
           </div>
@@ -257,11 +273,11 @@ export default function DeeperCheckPage() {
 
           <div className="space-y-xs">
             <p className="text-sm text-neutral-700">
-              目前尚未提供線上自動付款。付款方式會在確認範圍後以 Email 提供。
+              目前尚未提供線上自動付款。付款方式與幣別會在確認範圍後以 Email 提供。
             </p>
             <p className="text-xs text-neutral-600">
-              Online checkout is not available yet. Payment instructions are provided by
-              email after scope confirmation.
+              Online checkout is not available yet. Payment method and currency can be
+              confirmed by email after scope confirmation.
             </p>
           </div>
         </section>

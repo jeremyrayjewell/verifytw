@@ -7,16 +7,22 @@ import {
   FileText,
   Landmark,
 } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CompanyInfoTable } from '@/components/CompanyInfoTable';
 import { DeeperCheckCTA } from '@/components/DeeperCheckCTA';
 import { RiskSummary } from '@/components/RiskSummary';
 import { SourceNote } from '@/components/SourceNote';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { NoticeBox } from '@/components/ui/NoticeBox';
-import { validateBan } from '@/lib/validation';
-import { getEntityTypeLabel } from '@/lib/companyDisplay';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatusBadge } from '@/components/ui/StatusBadge';
+import {
+  getEntityTypeLabel,
+  getEntityTypeLabelEn,
+  getRegistrationSectionTitle,
+  getRegistrationSectionTitleEn,
+  getStatusFieldLabel,
+} from '@/lib/companyDisplay';
 import { getCompanyDetailByBan } from '@/lib/companyLookup';
+import { validateBan } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,7 +36,7 @@ function BackLink() {
   return (
     <Link
       href="/search"
-      className="inline-flex items-center gap-sm text-civic-blue font-medium hover:text-data-teal-text transition-colors focus-ring rounded-base px-md py-xs"
+      className="focus-ring inline-flex items-center gap-sm rounded-base px-md py-xs font-medium text-civic-blue transition-colors hover:text-data-teal-text"
     >
       <ArrowLeft size={20} />
       返回查詢
@@ -46,8 +52,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
     if (lookup.dataState === 'api_unavailable') {
       return (
         <div className="min-h-screen bg-surface">
-          <div className="py-2xl px-lg">
-            <div className="max-w-[860px] mx-auto space-y-xl">
+          <div className="px-lg py-2xl">
+            <div className="mx-auto max-w-[860px] space-y-xl">
               <BackLink />
               <NoticeBox type="warning" title="公開資料暫時無法取得">
                 <div className="space-y-sm">
@@ -58,10 +64,9 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               <EmptyState
                 icon={<FileSearch size={48} className="text-form-gray" />}
                 title="暫時無法顯示查詢結果"
-                description="你可以稍後再次查詢，或回到查詢頁改用公司名稱、負責人或英文名稱搜尋。"
+                description="你可以稍後再次查詢，或回到查詢頁改用登記名稱、負責人或英文名稱搜尋。"
                 action={{
                   label: '回到查詢頁',
-                  onClick: undefined,
                   href: '/',
                 }}
               />
@@ -73,20 +78,19 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
     return (
       <div className="min-h-screen bg-surface">
-        <div className="py-2xl px-lg">
-          <div className="max-w-[860px] mx-auto space-y-xl">
+        <div className="px-lg py-2xl">
+          <div className="mx-auto max-w-[860px] space-y-xl">
             <BackLink />
             <EmptyState
               icon={<FileSearch size={48} className="text-form-gray" />}
               title={validBan ? '目前查無此統一編號資料' : '請確認統一編號格式'}
               description={
                 validBan
-                  ? `目前沒有找到統一編號 ${params.ban} 的公開資料或示範資料。建議回到查詢頁重新輸入，或改用公司名稱搜尋。`
-                  : '統一編號應為 8 碼數字。你也可以回到查詢頁改用公司名稱、負責人或英文名稱搜尋。'
+                  ? `目前沒有找到統一編號 ${params.ban} 的公開資料或示範資料。建議回到查詢頁重新輸入，或改用登記名稱搜尋。`
+                  : '統一編號應為 8 碼數字。你也可以回到查詢頁改用登記名稱、負責人或英文名稱搜尋。'
               }
               action={{
                 label: '重新查詢',
-                onClick: undefined,
                 href: '/search',
               }}
             />
@@ -102,19 +106,21 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
   return (
     <div className="min-h-screen bg-surface">
-      <div className="py-lg px-lg border-b-2 border-form-gray">
-        <div className="max-w-[860px] mx-auto">
+      <div className="border-b-2 border-form-gray px-lg py-lg">
+        <div className="mx-auto max-w-[860px]">
           <BackLink />
         </div>
       </div>
 
-      <section className="py-2xl px-lg bg-rice-paper border-b-2 border-form-gray">
-        <div className="max-w-[860px] mx-auto space-y-lg">
+      <section className="border-b-2 border-form-gray bg-rice-paper px-lg py-2xl">
+        <div className="mx-auto max-w-[860px] space-y-lg">
           {showRealNotice && (
             <NoticeBox type="info" title="公開資料來源">
               <div className="space-y-xs">
                 <p>公開資料來源：經濟部商工登記公開資料</p>
-                <p className="text-xs text-neutral-600">目前顯示為即時查詢整理解讀結果，查詢結果僅供初步參考。</p>
+                <p className="text-xs text-neutral-600">
+                  Currently showing MOEA public registration data for company or business records.
+                </p>
               </div>
             </NoticeBox>
           )}
@@ -122,11 +128,24 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           {showMockNotice && (
             <NoticeBox type="info" title="原型說明">
               <div className="space-y-xs">
-                <p>目前為示範資料，尚未連接政府公開資料 API。</p>
-                {lookup.apiMessage && (
-                  <p>暫時無法取得公開資料，請稍後再試。</p>
-                )}
-                <p className="text-xs text-neutral-600">Demo data only. Public-data APIs are not connected yet.</p>
+                <p>目前為示範資料，尚未連接完整政府公開資料 API。</p>
+                {lookup.apiMessage && <p>暫時無法取得公開資料，請稍後再試。</p>}
+                <p className="text-xs text-neutral-600">
+                  Demo data only. Public-data APIs are not fully connected yet.
+                </p>
+              </div>
+            </NoticeBox>
+          )}
+
+          {lookup.sourceWarnings && lookup.sourceWarnings.length > 0 && (
+            <NoticeBox type="info" title="補充說明">
+              <div className="space-y-xs">
+                {lookup.sourceWarnings.map((warning) => (
+                  <p key={warning}>{warning}</p>
+                ))}
+                <p className="text-xs text-neutral-600">
+                  Some public-data sources did not respond, but this record is still available.
+                </p>
               </div>
             </NoticeBox>
           )}
@@ -135,17 +154,16 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
             <div className="flex flex-col gap-xl">
               <div className="flex flex-col gap-lg md:flex-row md:items-start md:justify-between">
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-data-teal-text mb-sm">
-                    公開資料查詢報告
-                  </p>
-                  <p className="text-xs text-neutral-600 mb-sm">Public record lookup report</p>
-                  <h1 className="text-3xl md:text-4xl font-bold text-main-ink mb-md">
+                  <p className="mb-sm text-sm font-medium text-data-teal-text">公開資料查詢報告</p>
+                  <p className="mb-sm text-xs text-neutral-600">Public record lookup report</p>
+                  <div className="mb-md inline-flex items-center rounded-full border border-form-gray bg-rice-paper px-md py-xs text-sm font-medium text-main-ink">
+                    {getEntityTypeLabel(company.entityType)} / {getEntityTypeLabelEn(company.entityType)}
+                  </div>
+                  <h1 className="mb-md text-3xl font-bold text-main-ink md:text-4xl">
                     {company.nameZh}
                   </h1>
                   {company.nameEn && (
-                    <p className="text-lg text-neutral-600 break-words">
-                      {company.nameEn}
-                    </p>
+                    <p className="break-words text-lg text-neutral-600">{company.nameEn}</p>
                   )}
                 </div>
                 <div className="md:flex-shrink-0">
@@ -155,31 +173,43 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
 
               <div className="grid gap-md sm:grid-cols-2 xl:grid-cols-4">
                 <div className="flex items-start gap-sm rounded-base border border-form-gray bg-rice-paper p-lg">
-                  <Landmark size={18} className="text-civic-blue mt-xs flex-shrink-0" />
+                  <Landmark size={18} className="mt-xs flex-shrink-0 text-civic-blue" />
                   <div>
-                    <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">統一編號</p>
-                    <p className="text-base text-main-ink font-semibold">{company.ban}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                      統一編號
+                    </p>
+                    <p className="text-base font-semibold text-main-ink">{company.ban}</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-sm rounded-base border border-form-gray bg-rice-paper p-lg">
-                  <FileText size={18} className="text-civic-blue mt-xs flex-shrink-0" />
+                  <FileText size={18} className="mt-xs flex-shrink-0 text-civic-blue" />
                   <div>
-                    <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">公司狀態</p>
-                    <p className="text-base text-main-ink font-semibold">{company.officialStatus}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                      {getStatusFieldLabel()}
+                    </p>
+                    <p className="text-base font-semibold text-main-ink">
+                      {company.officialStatus}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-sm rounded-base border border-form-gray bg-rice-paper p-lg">
-                  <Landmark size={18} className="text-civic-blue mt-xs flex-shrink-0" />
+                  <Landmark size={18} className="mt-xs flex-shrink-0 text-civic-blue" />
                   <div>
-                    <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">登記類型</p>
-                    <p className="text-base text-main-ink font-semibold">{getEntityTypeLabel(company.entityType)}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                      登記類型
+                    </p>
+                    <p className="text-base font-semibold text-main-ink">
+                      {getEntityTypeLabel(company.entityType)}
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-sm rounded-base border border-form-gray bg-rice-paper p-lg">
-                  <CalendarDays size={18} className="text-civic-blue mt-xs flex-shrink-0" />
+                  <CalendarDays size={18} className="mt-xs flex-shrink-0 text-civic-blue" />
                   <div>
-                    <p className="text-xs font-semibold text-neutral-600 uppercase tracking-wider">最後更新日期</p>
-                    <p className="text-base text-main-ink font-semibold">{company.lastUpdated}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-neutral-600">
+                      最後更新日期
+                    </p>
+                    <p className="text-base font-semibold text-main-ink">{company.lastUpdated}</p>
                   </div>
                 </div>
               </div>
@@ -188,29 +218,31 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
         </div>
       </section>
 
-      <section className="py-2xl px-lg">
-        <div className="max-w-[860px] mx-auto space-y-2xl">
+      <section className="px-lg py-2xl">
+        <div className="mx-auto max-w-[860px] space-y-2xl">
           <div>
-            <h2 className="text-2xl font-bold text-main-ink mb-xl">公司基本資料</h2>
-            <p className="text-sm text-neutral-600 mb-lg">Basic company information</p>
+            <h2 className="mb-xl text-2xl font-bold text-main-ink">
+              {getRegistrationSectionTitle()}
+            </h2>
+            <p className="mb-lg text-sm text-neutral-600">{getRegistrationSectionTitleEn()}</p>
             <CompanyInfoTable company={company} />
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-main-ink mb-xl">查證摘要</h2>
-            <p className="text-sm text-neutral-600 mb-lg">Lookup summary</p>
+            <h2 className="mb-xl text-2xl font-bold text-main-ink">查證摘要</h2>
+            <p className="mb-lg text-sm text-neutral-600">Lookup summary</p>
             <RiskSummary company={company} />
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-main-ink mb-xl">公開資料來源</h2>
-            <p className="text-sm text-neutral-600 mb-lg">Public data source</p>
+            <h2 className="mb-xl text-2xl font-bold text-main-ink">公開資料來源</h2>
+            <p className="mb-lg text-sm text-neutral-600">Public data source</p>
             <SourceNote company={company} />
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-main-ink mb-xl">注意事項</h2>
-            <p className="text-sm text-neutral-600 mb-lg">Important notes</p>
+            <h2 className="mb-xl text-2xl font-bold text-main-ink">注意事項</h2>
+            <p className="mb-lg text-sm text-neutral-600">Important notes</p>
             <NoticeBox type="info" title="使用提醒">
               <div className="space-y-sm">
                 <p>查詢結果僅供初步參考。</p>
@@ -226,20 +258,21 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               如果你需要比對對方提供的網站、Email、合約、付款資訊或其他文件，可申請人工查證。
             </p>
             <p className="text-xs text-neutral-600">
-              If you need to compare public records with a website, email, contract, payment details, or other documents, request a manual check.
+              If you need to compare public records with a website, email, contract, payment details,
+              or other documents, request a manual check.
             </p>
             <DeeperCheckCTA />
           </div>
 
-          <div className="pt-lg border-t-2 border-form-gray">
-            <h3 className="text-lg font-semibold text-main-ink mb-lg">延伸參考</h3>
-            <p className="text-sm text-neutral-600 mb-lg">References</p>
+          <div className="border-t-2 border-form-gray pt-lg">
+            <h3 className="mb-lg text-lg font-semibold text-main-ink">延伸參考</h3>
+            <p className="mb-lg text-sm text-neutral-600">References</p>
             <div className="flex flex-wrap gap-md">
               <a
                 href="https://findbiz.nat.gov.tw/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-sm px-lg py-md rounded-base bg-support-blue-gray text-civic-blue font-medium hover:bg-civic-blue hover:text-surface transition-colors focus-ring"
+                className="focus-ring inline-flex items-center gap-sm rounded-base bg-support-blue-gray px-lg py-md font-medium text-civic-blue transition-colors hover:bg-civic-blue hover:text-surface"
               >
                 商工登記公示查詢
                 <ExternalLink size={16} />
@@ -248,7 +281,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
                 href="https://www.moea.gov.tw/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-sm px-lg py-md rounded-base bg-support-blue-gray text-civic-blue font-medium hover:bg-civic-blue hover:text-surface transition-colors focus-ring"
+                className="focus-ring inline-flex items-center gap-sm rounded-base bg-support-blue-gray px-lg py-md font-medium text-civic-blue transition-colors hover:bg-civic-blue hover:text-surface"
               >
                 經濟部
                 <ExternalLink size={16} />

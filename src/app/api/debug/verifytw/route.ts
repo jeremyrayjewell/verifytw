@@ -25,7 +25,9 @@ export async function GET() {
     deeperCheckFromEmailConfigured: Boolean(process.env.DEEPER_CHECK_FROM_EMAIL),
     endpoints: {
       companyByBanHost: new URL(moeaConfig.companyByBanEndpoint).host,
-      keywordSearchHost: new URL(moeaConfig.keywordEndpoint).host,
+      companyKeywordSearchHost: new URL(moeaConfig.companyKeywordEndpoint).host,
+      businessByBanHost: new URL(moeaConfig.businessByBanEndpoint).host,
+      businessKeywordSearchHost: new URL(moeaConfig.businessKeywordEndpoint).host,
     },
     timeouts: {
       banLookupMs: moeaConfig.banTimeoutMs,

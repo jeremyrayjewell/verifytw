@@ -13,6 +13,43 @@ export function getEntityTypeLabel(entityType: EntityType): string {
   }
 }
 
+export function getEntityTypeLabelEn(entityType: EntityType): string {
+  switch (entityType) {
+    case 'company':
+      return 'Company';
+    case 'business':
+      return 'Business';
+    case 'branch':
+      return 'Branch';
+    default:
+      return entityType;
+  }
+}
+
+export function getRegistrationSectionTitle(): string {
+  return '登記基本資料';
+}
+
+export function getRegistrationSectionTitleEn(): string {
+  return 'Registration information';
+}
+
+export function getStatusFieldLabel(): string {
+  return '登記狀態';
+}
+
+export function getStatusFieldLabelEn(): string {
+  return 'Registration status';
+}
+
+export function getNameFieldLabel(entityType: EntityType): string {
+  return entityType === 'business' ? '登記名稱' : '登記名稱';
+}
+
+export function getNameFieldLabelEn(): string {
+  return 'Registered name';
+}
+
 export function getResultCardMeta(company: Company) {
   return [
     { label: '統一編號', value: company.ban },

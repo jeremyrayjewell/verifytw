@@ -7,18 +7,26 @@ const MOEA_COMPANY_BY_BAN_ENDPOINT =
 const MOEA_COMPANY_KEYWORD_ENDPOINT =
   process.env.MOEA_COMPANY_KEYWORD_API_BASE ??
   'https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C';
+const MOEA_BUSINESS_BY_BAN_ENDPOINT =
+  process.env.MOEA_BUSINESS_API_BASE ??
+  'https://data.gcis.nat.gov.tw/od/data/api/426D5542-5F05-43EB-83F9-F1300F14E1F1';
+const MOEA_BUSINESS_KEYWORD_ENDPOINT =
+  process.env.MOEA_BUSINESS_KEYWORD_API_BASE ??
+  'https://data.gcis.nat.gov.tw/od/data/api/A1B4CBFF-2D3A-409B-8A78-2AD94F63AE4A';
 
-// TODO: Add MOEA keyword search integration for /search.
-// TODO: Add MOF tax registration cross-check after the BAN lookup is stable.
+// TODO: Add MOF tax registration cross-check after company/business lookup is stable.
+// TODO: Add branch registration lookup after company and business records are stable.
 // TODO: Add source URL display handling once we expose official links in the UI.
 
 const MOEA_LOOKUP_TIMEOUT_MS = 8000;
 const MOEA_KEYWORD_LOOKUP_TIMEOUT_MS = 30000;
 const MOEA_KEYWORD_STATUS_CODE = '01';
+const MOEA_BUSINESS_STATUS_CODE = '01';
 const MOEA_KEYWORD_TOP = 20;
 
 export const MOEA_SOURCE_NAME = '經濟部商工登記公開資料';
-export const MOEA_SOURCE_NAME_EN = 'MOEA public company registration data';
+export const MOEA_COMPANY_SOURCE_NAME_EN = 'MOEA public company registration data';
+export const MOEA_BUSINESS_SOURCE_NAME_EN = 'MOEA public business registration data';
 
 type MoeaCompanyRecord = Partial<{
   Business_Accounting_NO: string;
@@ -40,6 +48,26 @@ type MoeaCompanyRecord = Partial<{
   Sus_End_Date: string;
 }>;
 
+type MoeaBusinessRecord = Partial<{
+  President_No: string;
+  Business_Name: string;
+  Business_Current_Status: string;
+  Business_Current_Status_Desc: string;
+  Business_Register_Funds: string | number;
+  Responsible_Name: string;
+  Business_Organization_Type: string;
+  Business_Organization_Type_Desc: string;
+  Agency: string;
+  Agency_Desc: string;
+  Business_Address: string;
+  Business_Setup_Approve_Date: string;
+  Business_Last_Change_Date: string;
+  Business_Item_Old: string;
+  Business_Seq_No: string | number;
+  Business_Item: string;
+  Business_Item_Desc: string;
+}>;
+
 export interface MoeaLookupResult {
   company: Company | null;
   state: 'found' | 'not_found' | 'unavailable' | 'timeout' | 'parse_error';
@@ -59,7 +87,9 @@ export function isMoeaLookupDisabled(): boolean {
 export function getMoeaDebugConfig() {
   return {
     companyByBanEndpoint: MOEA_COMPANY_BY_BAN_ENDPOINT,
-    keywordEndpoint: MOEA_COMPANY_KEYWORD_ENDPOINT,
+    companyKeywordEndpoint: MOEA_COMPANY_KEYWORD_ENDPOINT,
+    businessByBanEndpoint: MOEA_BUSINESS_BY_BAN_ENDPOINT,
+    businessKeywordEndpoint: MOEA_BUSINESS_KEYWORD_ENDPOINT,
     banTimeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
     keywordTimeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
     lookupEnabled: !isMoeaLookupDisabled(),
@@ -110,16 +140,16 @@ function inferStatus(statusDesc: string, caseStatusDesc: string): Status {
   return '資料相符';
 }
 
-function buildStatusLabel(statusDesc: string, companyName: string): string {
+function buildStatusLabel(statusDesc: string, entityLabel: string): string {
   if (!statusDesc) {
-    return `目前正在整理 ${companyName} 的公開資料欄位，建議稍後再次確認。`;
+    return `目前正在整理此${entityLabel}的公開資料欄位，建議稍後再次確認。`;
   }
 
   if (/(解散|撤銷|廢止|停業|歇業|非營業中|命令停業)/.test(statusDesc)) {
-    return `目前公開資料顯示此公司狀態為「${statusDesc}」，仍建議與對方提供的合約、付款資訊或官方文件交叉確認。`;
+    return `目前公開資料顯示此${entityLabel}狀態為「${statusDesc}」，仍建議與對方提供的合約、付款資訊或官方文件交叉確認。`;
   }
 
-  return `目前公開資料顯示此公司為「${statusDesc}」。`;
+  return `目前公開資料顯示此${entityLabel}為「${statusDesc}」。`;
 }
 
 function getFetchedAt(): string {
@@ -137,61 +167,35 @@ function getFetchedAt(): string {
     .replace(',', '');
 }
 
-function getFirstRecord(payload: unknown): MoeaCompanyRecord | null {
+function getFirstRecord<T>(payload: unknown): T | null {
   if (Array.isArray(payload)) {
-    return (payload[0] as MoeaCompanyRecord | undefined) ?? null;
+    return (payload[0] as T | undefined) ?? null;
   }
 
   if (payload && typeof payload === 'object' && Array.isArray((payload as { value?: unknown[] }).value)) {
-    return (((payload as { value: unknown[] }).value[0] as MoeaCompanyRecord | undefined) ?? null);
+    return (((payload as { value: unknown[] }).value[0] as T | undefined) ?? null);
   }
 
   return null;
 }
 
-function normalizeMoeaCompany(record: MoeaCompanyRecord): Company | null {
-  const statusDesc = String(record.Company_Status_Desc ?? '').trim();
-  const caseStatusDesc = String(record.Case_Status_Desc ?? '').trim();
-  const companyName = String(record.Company_Name ?? '').trim();
-
-  const normalized: Company = {
-    ban: String(record.Business_Accounting_NO ?? '').trim(),
-    nameZh: companyName,
-    nameEn: undefined,
-    status: inferStatus(statusDesc, caseStatusDesc),
-    officialStatus: statusDesc || caseStatusDesc || '公開資料未提供',
-    representative: String(record.Responsible_Name ?? '').trim() || '公開資料未提供',
-    capital: formatCapital(record.Capital_Stock_Amount ?? record.Paid_In_Capital_Amount),
-    address: String(record.Company_Location ?? '').trim() || '公開資料未提供',
-    establishedDate: formatDate(record.Company_Setup_Date),
-    lastUpdated: formatDate(record.Change_Of_Approval_Data),
-    source: MOEA_SOURCE_NAME,
-    sourceUpdated: formatDate(record.Change_Of_Approval_Data),
-    entityType: 'company',
-    statusLabel: buildStatusLabel(statusDesc, companyName || '此公司'),
-    sourceKind: 'real',
-    fetchedAt: getFetchedAt(),
-    sourceUrl: record.Company_Name ? MOEA_COMPANY_BY_BAN_ENDPOINT : undefined,
-  };
-
-  const parsed = validateCompanyRecord(normalized);
-  return parsed.success ? parsed.data : null;
-}
-
-function getRecords(payload: unknown): MoeaCompanyRecord[] {
+function getRecords<T>(payload: unknown): T[] {
   if (Array.isArray(payload)) {
-    return payload as MoeaCompanyRecord[];
+    return payload as T[];
   }
 
   if (payload && typeof payload === 'object' && Array.isArray((payload as { value?: unknown[] }).value)) {
-    return (payload as { value: unknown[] }).value as MoeaCompanyRecord[];
+    return (payload as { value: unknown[] }).value as T[];
   }
 
   return [];
 }
 
 function isKeywordPayloadParseable(payload: unknown): boolean {
-  return Array.isArray(payload) || Boolean(payload && typeof payload === 'object' && Array.isArray((payload as { value?: unknown[] }).value));
+  return (
+    Array.isArray(payload) ||
+    Boolean(payload && typeof payload === 'object' && Array.isArray((payload as { value?: unknown[] }).value))
+  );
 }
 
 function isKnownNoDataPayload(payload: unknown): boolean {
@@ -228,8 +232,9 @@ function isKnownNoDataPayload(payload: unknown): boolean {
   return /(查無資料|查無符合|無符合|無資料|no data|not found)/i.test(combinedMessage);
 }
 
-function logMoeaKeywordDebug(details: {
-  classification: 'live-success' | 'zero-results' | 'fallback' | 'timeout' | 'unavailable' | 'parse-error';
+function logKeywordDebug(details: {
+  sourceType: 'company' | 'business';
+  classification: 'live-success' | 'zero-results' | 'timeout' | 'unavailable' | 'parse-error';
   originalQuery?: string;
   aliasExpandedQuery?: string;
   broaderQuery?: string;
@@ -245,7 +250,7 @@ function logMoeaKeywordDebug(details: {
     return;
   }
 
-  console.log('[verifytw][moea-keyword]', {
+  console.log(`[verifytw][moea-${details.sourceType}-keyword]`, {
     originalQuery: details.originalQuery ?? null,
     aliasExpandedQuery: details.aliasExpandedQuery ?? null,
     broaderQuery: details.broaderQuery ?? null,
@@ -260,7 +265,8 @@ function logMoeaKeywordDebug(details: {
   });
 }
 
-function logMoeaBanDebug(details: {
+function logBanDebug(details: {
+  sourceType: 'company' | 'business';
   lookupEnabled: boolean;
   url: string;
   timeoutMs: number;
@@ -277,7 +283,7 @@ function logMoeaBanDebug(details: {
     return;
   }
 
-  console.log('[verifytw][moea-ban]', {
+  console.log(`[verifytw][moea-${details.sourceType}-ban]`, {
     moeaLookupEnabled: details.lookupEnabled,
     requestUrl: details.url,
     timeoutMs: details.timeoutMs,
@@ -292,12 +298,87 @@ function logMoeaBanDebug(details: {
   });
 }
 
-export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResult> {
-  const parsedBan = validateBan(ban);
+function normalizeMoeaCompany(record: MoeaCompanyRecord): Company | null {
+  const statusDesc = String(record.Company_Status_Desc ?? '').trim();
+  const caseStatusDesc = String(record.Case_Status_Desc ?? '').trim();
+  const companyName = String(record.Company_Name ?? '').trim();
+
+  const normalized: Company = {
+    ban: String(record.Business_Accounting_NO ?? '').trim(),
+    nameZh: companyName,
+    nameEn: undefined,
+    status: inferStatus(statusDesc, caseStatusDesc),
+    officialStatus: statusDesc || caseStatusDesc || '公開資料未提供',
+    representative: String(record.Responsible_Name ?? '').trim() || '公開資料未提供',
+    capital: formatCapital(record.Capital_Stock_Amount ?? record.Paid_In_Capital_Amount),
+    address: String(record.Company_Location ?? '').trim() || '公開資料未提供',
+    establishedDate: formatDate(record.Company_Setup_Date),
+    lastUpdated: formatDate(record.Change_Of_Approval_Data),
+    source: MOEA_SOURCE_NAME,
+    sourceUpdated: formatDate(record.Change_Of_Approval_Data),
+    entityType: 'company',
+    entityTypeLabelZh: '公司',
+    entityTypeLabelEn: 'Company',
+    statusLabel: buildStatusLabel(statusDesc || caseStatusDesc, '公司'),
+    sourceKind: 'real',
+    sourceType: 'moea_company',
+    sourceNameZh: MOEA_SOURCE_NAME,
+    sourceNameEn: MOEA_COMPANY_SOURCE_NAME_EN,
+    fetchedAt: getFetchedAt(),
+    sourceUrl: MOEA_COMPANY_BY_BAN_ENDPOINT,
+  };
+
+  const parsed = validateCompanyRecord(normalized);
+  return parsed.success ? parsed.data : null;
+}
+
+function normalizeMoeaBusiness(record: MoeaBusinessRecord): Company | null {
+  const statusDesc = String(record.Business_Current_Status_Desc ?? '').trim();
+  const businessName = String(record.Business_Name ?? '').trim();
+
+  const normalized: Company = {
+    ban: String(record.President_No ?? '').trim(),
+    nameZh: businessName,
+    nameEn: undefined,
+    status: inferStatus(statusDesc, ''),
+    officialStatus: statusDesc || '公開資料未提供',
+    representative: String(record.Responsible_Name ?? '').trim() || '公開資料未提供',
+    capital: formatCapital(record.Business_Register_Funds),
+    address: String(record.Business_Address ?? '').trim() || '公開資料未提供',
+    establishedDate: formatDate(record.Business_Setup_Approve_Date),
+    lastUpdated: formatDate(record.Business_Last_Change_Date),
+    source: MOEA_SOURCE_NAME,
+    sourceUpdated: formatDate(record.Business_Last_Change_Date),
+    entityType: 'business',
+    entityTypeLabelZh: '商業',
+    entityTypeLabelEn: 'Business',
+    statusLabel: buildStatusLabel(statusDesc, '商業登記'),
+    sourceKind: 'real',
+    sourceType: 'moea_business',
+    sourceNameZh: MOEA_SOURCE_NAME,
+    sourceNameEn: MOEA_BUSINESS_SOURCE_NAME_EN,
+    fetchedAt: getFetchedAt(),
+    sourceUrl: MOEA_BUSINESS_BY_BAN_ENDPOINT,
+  };
+
+  const parsed = validateCompanyRecord(normalized);
+  return parsed.success ? parsed.data : null;
+}
+
+async function fetchByBan<T>(config: {
+  sourceType: 'company' | 'business';
+  endpoint: string;
+  filterField: string;
+  ban: string;
+  normalizer: (record: T) => Company | null;
+  notFoundMessage?: string;
+}): Promise<MoeaLookupResult> {
+  const parsedBan = validateBan(config.ban);
   if (!parsedBan.success) {
-    logMoeaBanDebug({
+    logBanDebug({
+      sourceType: config.sourceType,
       lookupEnabled: !isMoeaLookupDisabled(),
-      url: MOEA_COMPANY_BY_BAN_ENDPOINT,
+      url: config.endpoint,
       timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
       classification: 'invalid-ban',
       errorMessage: parsedBan.error.issues[0]?.message ?? '請輸入 8 碼統一編號',
@@ -310,9 +391,9 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
     };
   }
 
-  const url = new URL(MOEA_COMPANY_BY_BAN_ENDPOINT);
+  const url = new URL(config.endpoint);
   url.searchParams.set('$format', 'json');
-  url.searchParams.set('$filter', `Business_Accounting_NO eq ${parsedBan.data}`);
+  url.searchParams.set('$filter', `${config.filterField} eq ${parsedBan.data}`);
   url.searchParams.set('$skip', '0');
   url.searchParams.set('$top', '1');
 
@@ -321,9 +402,7 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
 
   try {
     const response = await fetch(url.toString(), {
-      headers: {
-        accept: 'application/json',
-      },
+      headers: { accept: 'application/json' },
       cache: 'no-store',
       signal: controller.signal,
     });
@@ -333,7 +412,8 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
     const preview = rawText.slice(0, 500);
 
     if (!response.ok) {
-      logMoeaBanDebug({
+      logBanDebug({
+        sourceType: config.sourceType,
         lookupEnabled: !isMoeaLookupDisabled(),
         url: url.toString(),
         timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -355,7 +435,8 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
     try {
       payload = JSON.parse(rawText) as unknown;
     } catch {
-      logMoeaBanDebug({
+      logBanDebug({
+        sourceType: config.sourceType,
         lookupEnabled: !isMoeaLookupDisabled(),
         url: url.toString(),
         timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -373,10 +454,10 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       };
     }
 
-    const record = getFirstRecord(payload);
-
+    const record = getFirstRecord<T>(payload);
     if (!record) {
-      logMoeaBanDebug({
+      logBanDebug({
+        sourceType: config.sourceType,
         lookupEnabled: !isMoeaLookupDisabled(),
         url: url.toString(),
         timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -390,12 +471,14 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       return {
         company: null,
         state: 'not_found',
+        message: config.notFoundMessage,
       };
     }
 
-    const company = normalizeMoeaCompany(record);
+    const company = config.normalizer(record);
     if (!company) {
-      logMoeaBanDebug({
+      logBanDebug({
+        sourceType: config.sourceType,
         lookupEnabled: !isMoeaLookupDisabled(),
         url: url.toString(),
         timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -413,7 +496,8 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       };
     }
 
-    logMoeaBanDebug({
+    logBanDebug({
+      sourceType: config.sourceType,
       lookupEnabled: !isMoeaLookupDisabled(),
       url: url.toString(),
       timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -431,7 +515,8 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
     };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logMoeaBanDebug({
+      logBanDebug({
+        sourceType: config.sourceType,
         lookupEnabled: !isMoeaLookupDisabled(),
         url: url.toString(),
         timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -447,7 +532,8 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
       };
     }
 
-    logMoeaBanDebug({
+    logBanDebug({
+      sourceType: config.sourceType,
       lookupEnabled: !isMoeaLookupDisabled(),
       url: url.toString(),
       timeoutMs: MOEA_LOOKUP_TIMEOUT_MS,
@@ -466,29 +552,31 @@ export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResu
   }
 }
 
-export async function searchMoeaCompaniesByKeyword(
-  query: string,
+async function searchByKeyword<T>(config: {
+  sourceType: 'company' | 'business';
+  endpoint: string;
+  query: string;
+  filterExpression: (normalizedQuery: string) => string;
+  normalizer: (record: T) => Company | null;
+  notFoundMessage: string;
   debugMeta?: {
     originalQuery?: string;
     aliasExpandedQuery?: string;
     broaderQuery?: string;
-  }
-): Promise<MoeaKeywordSearchResult> {
-  const parsedQuery = validateSearchQuery(query, 'all');
+  };
+}): Promise<MoeaKeywordSearchResult> {
+  const parsedQuery = validateSearchQuery(config.query, 'all');
   if (!parsedQuery.success) {
     return {
       companies: [],
       state: 'unavailable',
-      message: parsedQuery.error.issues[0]?.message ?? '請先輸入公司名稱',
+      message: parsedQuery.error.issues[0]?.message ?? '請先輸入登記名稱',
     };
   }
 
-  const url = new URL(MOEA_COMPANY_KEYWORD_ENDPOINT);
+  const url = new URL(config.endpoint);
   url.searchParams.set('$format', 'json');
-  url.searchParams.set(
-    '$filter',
-    `Company_Name like ${parsedQuery.data.query} and Company_Status eq ${MOEA_KEYWORD_STATUS_CODE}`
-  );
+  url.searchParams.set('$filter', config.filterExpression(parsedQuery.data.query));
   url.searchParams.set('$skip', '0');
   url.searchParams.set('$top', String(MOEA_KEYWORD_TOP));
 
@@ -498,9 +586,7 @@ export async function searchMoeaCompaniesByKeyword(
 
   try {
     const response = await fetch(requestUrl, {
-      headers: {
-        accept: 'application/json',
-      },
+      headers: { accept: 'application/json' },
       cache: 'no-store',
       signal: controller.signal,
     });
@@ -511,11 +597,12 @@ export async function searchMoeaCompaniesByKeyword(
     const trimmedRawText = rawText.trim();
 
     if (response.status === 204 || trimmedRawText.length === 0) {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'zero-results',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -524,19 +611,16 @@ export async function searchMoeaCompaniesByKeyword(
         parsedResultCount: 0,
       });
 
-      return {
-        companies: [],
-        state: 'not_found',
-        message: '沒有找到相符的公司登記公開資料。',
-      };
+      return { companies: [], state: 'not_found', message: config.notFoundMessage };
     }
 
     if (!response.ok) {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'unavailable',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -556,11 +640,12 @@ export async function searchMoeaCompaniesByKeyword(
     try {
       payload = JSON.parse(trimmedRawText) as unknown;
     } catch {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'parse-error',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -577,11 +662,12 @@ export async function searchMoeaCompaniesByKeyword(
     }
 
     if (isKnownNoDataPayload(payload)) {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'zero-results',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -590,19 +676,16 @@ export async function searchMoeaCompaniesByKeyword(
         parsedResultCount: 0,
       });
 
-      return {
-        companies: [],
-        state: 'not_found',
-        message: '沒有找到相符的公司登記公開資料。',
-      };
+      return { companies: [], state: 'not_found', message: config.notFoundMessage };
     }
 
     if (!isKeywordPayloadParseable(payload)) {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'parse-error',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -618,26 +701,27 @@ export async function searchMoeaCompaniesByKeyword(
       };
     }
 
-    const companies: Company[] = getRecords(payload).reduce<Company[]>((acc, record) => {
-      const company = normalizeMoeaCompany(record);
+    const companies: Company[] = getRecords<T>(payload).reduce<Company[]>((acc, record) => {
+      const company = config.normalizer(record);
       if (!company) {
         return acc;
       }
 
       acc.push({
         ...company,
-        sourceUrl: MOEA_COMPANY_KEYWORD_ENDPOINT,
+        sourceUrl: config.endpoint,
       });
 
       return acc;
     }, []);
 
     if (companies.length === 0) {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'zero-results',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
         responseStatus: response.status,
@@ -646,18 +730,15 @@ export async function searchMoeaCompaniesByKeyword(
         parsedResultCount: 0,
       });
 
-      return {
-        companies: [],
-        state: 'not_found',
-        message: '沒有找到相符的公司登記公開資料。',
-      };
+      return { companies: [], state: 'not_found', message: config.notFoundMessage };
     }
 
-    logMoeaKeywordDebug({
+    logKeywordDebug({
+      sourceType: config.sourceType,
       classification: 'live-success',
-      originalQuery: debugMeta?.originalQuery,
-      aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-      broaderQuery: debugMeta?.broaderQuery,
+      originalQuery: config.debugMeta?.originalQuery,
+      aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+      broaderQuery: config.debugMeta?.broaderQuery,
       url: requestUrl,
       timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
       responseStatus: response.status,
@@ -666,20 +747,17 @@ export async function searchMoeaCompaniesByKeyword(
       parsedResultCount: companies.length,
     });
 
-    return {
-      companies,
-      state: 'found',
-    };
+    return { companies, state: 'found' };
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      logMoeaKeywordDebug({
+      logKeywordDebug({
+        sourceType: config.sourceType,
         classification: 'timeout',
-        originalQuery: debugMeta?.originalQuery,
-        aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-        broaderQuery: debugMeta?.broaderQuery,
+        originalQuery: config.debugMeta?.originalQuery,
+        aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+        broaderQuery: config.debugMeta?.broaderQuery,
         url: requestUrl,
         timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
-        preview: '',
         parsedResultCount: 0,
         errorMessage: error.message,
       });
@@ -691,14 +769,14 @@ export async function searchMoeaCompaniesByKeyword(
       };
     }
 
-    logMoeaKeywordDebug({
+    logKeywordDebug({
+      sourceType: config.sourceType,
       classification: 'unavailable',
-      originalQuery: debugMeta?.originalQuery,
-      aliasExpandedQuery: debugMeta?.aliasExpandedQuery,
-      broaderQuery: debugMeta?.broaderQuery,
+      originalQuery: config.debugMeta?.originalQuery,
+      aliasExpandedQuery: config.debugMeta?.aliasExpandedQuery,
+      broaderQuery: config.debugMeta?.broaderQuery,
       url: requestUrl,
       timeoutMs: MOEA_KEYWORD_LOOKUP_TIMEOUT_MS,
-      preview: '',
       parsedResultCount: 0,
       errorMessage: error instanceof Error ? error.message : 'unknown error',
     });
@@ -711,4 +789,64 @@ export async function searchMoeaCompaniesByKeyword(
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export async function fetchMoeaCompanyByBan(ban: string): Promise<MoeaLookupResult> {
+  return fetchByBan<MoeaCompanyRecord>({
+    sourceType: 'company',
+    endpoint: MOEA_COMPANY_BY_BAN_ENDPOINT,
+    filterField: 'Business_Accounting_NO',
+    ban,
+    normalizer: normalizeMoeaCompany,
+  });
+}
+
+export async function fetchMoeaBusinessByBan(ban: string): Promise<MoeaLookupResult> {
+  return fetchByBan<MoeaBusinessRecord>({
+    sourceType: 'business',
+    endpoint: MOEA_BUSINESS_BY_BAN_ENDPOINT,
+    filterField: 'President_No',
+    ban,
+    normalizer: normalizeMoeaBusiness,
+  });
+}
+
+export async function searchMoeaCompaniesByKeyword(
+  query: string,
+  debugMeta?: {
+    originalQuery?: string;
+    aliasExpandedQuery?: string;
+    broaderQuery?: string;
+  }
+): Promise<MoeaKeywordSearchResult> {
+  return searchByKeyword<MoeaCompanyRecord>({
+    sourceType: 'company',
+    endpoint: MOEA_COMPANY_KEYWORD_ENDPOINT,
+    query,
+    filterExpression: (normalizedQuery) =>
+      `Company_Name like ${normalizedQuery} and Company_Status eq ${MOEA_KEYWORD_STATUS_CODE}`,
+    normalizer: normalizeMoeaCompany,
+    notFoundMessage: '沒有找到相符的公司登記公開資料。',
+    debugMeta,
+  });
+}
+
+export async function searchMoeaBusinessesByKeyword(
+  query: string,
+  debugMeta?: {
+    originalQuery?: string;
+    aliasExpandedQuery?: string;
+    broaderQuery?: string;
+  }
+): Promise<MoeaKeywordSearchResult> {
+  return searchByKeyword<MoeaBusinessRecord>({
+    sourceType: 'business',
+    endpoint: MOEA_BUSINESS_KEYWORD_ENDPOINT,
+    query,
+    filterExpression: (normalizedQuery) =>
+      `Business_Name like ${normalizedQuery} and Business_Current_Status eq ${MOEA_BUSINESS_STATUS_CODE}`,
+    normalizer: normalizeMoeaBusiness,
+    notFoundMessage: '沒有找到相符的商業登記公開資料。',
+    debugMeta,
+  });
 }

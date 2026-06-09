@@ -1,13 +1,24 @@
 import { searchCompanies } from '@/lib/mockCompanies';
-import { searchMoeaCompaniesByKeyword, isMoeaLookupDisabled } from '@/lib/sources/moea';
+import {
+  isMoeaLookupDisabled,
+  searchMoeaBusinessesByKeyword,
+  searchMoeaCompaniesByKeyword,
+} from '@/lib/sources/moea';
 import { validateBan, validateSearchQuery } from '@/lib/validation';
 import type { Company, SearchFilter } from '@/types/company';
 
 export interface CompanySearchResult {
   companies: Company[];
-  dataState: 'live' | 'mock' | 'fallback_mock' | 'no_results' | 'invalid_query';
+  dataState:
+    | 'live'
+    | 'live_partial'
+    | 'mock'
+    | 'fallback_mock'
+    | 'no_results'
+    | 'invalid_query';
   resultState:
     | 'live_success'
+    | 'live_partial_success'
     | 'live_timeout'
     | 'live_zero_results'
     | 'fallback_mock'
@@ -47,10 +58,7 @@ function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
     }
 
     seen.add(candidateQuery);
-    candidates.push({
-      query: candidateQuery,
-      notes,
-    });
+    candidates.push({ query: candidateQuery, notes });
   };
 
   if (mapped) {
@@ -80,7 +88,15 @@ function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
 function logSearchClassification(details: {
   query: string;
   filterType: SearchFilter;
-  classification: 'live' | 'empty' | 'fallback' | 'unavailable' | 'parse-error' | 'mock' | 'invalid-query';
+  classification:
+    | 'live'
+    | 'live-partial'
+    | 'empty'
+    | 'fallback'
+    | 'unavailable'
+    | 'parse-error'
+    | 'mock'
+    | 'invalid-query';
   resultCount: number;
   aliasExpandedQuery?: string;
   broaderQuery?: string;
@@ -108,6 +124,24 @@ function sortAndFilterCompanies(companies: Company[], filterType: SearchFilter):
   }
 
   return filtered;
+}
+
+function mergeLiveResults(companies: Company[]): Company[] {
+  const byBan = new Map<string, Company>();
+
+  for (const company of companies) {
+    const existing = byBan.get(company.ban);
+    if (!existing) {
+      byBan.set(company.ban, company);
+      continue;
+    }
+
+    if (existing.entityType === 'business' && company.entityType === 'company') {
+      byBan.set(company.ban, company);
+    }
+  }
+
+  return [...byBan.values()];
 }
 
 export async function getSearchResults(
@@ -155,22 +189,16 @@ export async function getSearchResults(
       resultState: mockResults.length > 0 ? 'mock' : 'live_zero_results',
       query,
       filterType,
-      helperText:
-        mockResults.length > 0
-          ? undefined
-          : '沒有找到相符的公司登記公開資料。',
-      searchNotes:
-        mockResults.length > 0
-          ? ['建議優先使用統一編號查詢，結果通常更準確。', 'For best results, use the 8-digit Business ID.']
-          : [
-              '建議優先使用統一編號查詢，結果通常更準確。',
-              'For best results, use the 8-digit Business ID.',
-            ],
+      helperText: mockResults.length > 0 ? undefined : '未找到相符登記資料。',
+      searchNotes: [
+        '建議優先使用統一編號查詢，結果通常更準確。',
+        'For best results, use the 8-digit Business ID.',
+      ],
     };
   }
 
-  let liveResult = null as Awaited<ReturnType<typeof searchMoeaCompaniesByKeyword>> | null;
-  let matchedCandidate = liveCandidates[0] ?? { query, notes: [] };
+  let companyLiveResult = null as Awaited<ReturnType<typeof searchMoeaCompaniesByKeyword>> | null;
+  let matchedCompanyCandidate = liveCandidates[0] ?? { query, notes: [] };
 
   for (const candidate of liveCandidates) {
     const candidateResult = await searchMoeaCompaniesByKeyword(candidate.query, {
@@ -178,8 +206,8 @@ export async function getSearchResults(
       aliasExpandedQuery,
       broaderQuery,
     });
-    liveResult = candidateResult;
-    matchedCandidate = candidate;
+    companyLiveResult = candidateResult;
+    matchedCompanyCandidate = candidate;
 
     if (candidateResult.state === 'found') {
       break;
@@ -194,116 +222,152 @@ export async function getSearchResults(
     }
   }
 
-  if (liveResult?.state === 'found') {
-    const companies = sortAndFilterCompanies(liveResult.companies, filterType);
+  const businessLiveResult = await searchMoeaBusinessesByKeyword(query, {
+    originalQuery: query,
+  });
+
+  const combinedLiveResults = mergeLiveResults([
+    ...(companyLiveResult?.state === 'found' ? companyLiveResult.companies : []),
+    ...(businessLiveResult.state === 'found' ? businessLiveResult.companies : []),
+  ]);
+
+  const filteredLiveResults = sortAndFilterCompanies(combinedLiveResults, filterType);
+
+  const companyFailed =
+    companyLiveResult?.state === 'unavailable' ||
+    companyLiveResult?.state === 'timeout' ||
+    companyLiveResult?.state === 'parse_error';
+  const businessFailed =
+    businessLiveResult.state === 'unavailable' ||
+    businessLiveResult.state === 'timeout' ||
+    businessLiveResult.state === 'parse_error';
+
+  if (filteredLiveResults.length > 0) {
+    const partialMessage =
+      companyFailed || businessFailed
+        ? '部分公開資料來源暫時無法回應。'
+        : undefined;
 
     logSearchClassification({
       query,
       filterType,
-      classification: 'live',
-      resultCount: companies.length,
+      classification: partialMessage ? 'live-partial' : 'live',
+      resultCount: filteredLiveResults.length,
       aliasExpandedQuery,
       broaderQuery,
-      finalLiveQuery: matchedCandidate.query,
+      finalLiveQuery: matchedCompanyCandidate.query,
     });
 
     return {
-      companies,
-      dataState: 'live',
-      resultState: 'live_success',
+      companies: filteredLiveResults,
+      dataState: partialMessage ? 'live_partial' : 'live',
+      resultState: partialMessage ? 'live_partial_success' : 'live_success',
       query,
       filterType,
+      apiMessage: partialMessage,
       searchNotes: [
         '建議優先使用統一編號查詢，結果通常更準確。',
         'For best results, use the 8-digit Business ID.',
-        ...matchedCandidate.notes,
+        ...matchedCompanyCandidate.notes,
       ],
     };
   }
 
-  if (!liveResult) {
-    liveResult = {
-      companies: [],
-      state: 'not_found',
-      message: '沒有找到相符的公司登記公開資料。',
-    };
-  }
-
-  if (mockResults.length > 0) {
-    const isFallbackState =
-      liveResult.state === 'unavailable' ||
-      liveResult.state === 'timeout' ||
-      liveResult.state === 'parse_error';
-
+  if (
+    (companyFailed || businessFailed) &&
+    mockResults.length > 0
+  ) {
     logSearchClassification({
       query,
       filterType,
-      classification:
-        isFallbackState
-          ? 'fallback'
-          : liveResult.state === 'parse_error'
-            ? 'parse-error'
-            : 'fallback',
+      classification: 'fallback',
       resultCount: mockResults.length,
       aliasExpandedQuery,
       broaderQuery,
-      finalLiveQuery: matchedCandidate.query,
+      finalLiveQuery: matchedCompanyCandidate.query,
     });
 
     return {
       companies: mockResults,
-      dataState: isFallbackState ? 'fallback_mock' : 'mock',
-      resultState: isFallbackState ? 'fallback_mock' : 'mock',
+      dataState: 'fallback_mock',
+      resultState: 'fallback_mock',
       query,
       filterType,
-      apiMessage: isFallbackState ? liveResult.message : undefined,
+      apiMessage: '部分公開資料來源暫時無法回應。',
       searchNotes: [
         '建議優先使用統一編號查詢，結果通常更準確。',
         'For best results, use the 8-digit Business ID.',
-        ...matchedCandidate.notes,
+        ...matchedCompanyCandidate.notes,
       ],
     };
   }
 
-  logSearchClassification({
+  if (
+    companyFailed &&
+    businessFailed
+  ) {
+    logSearchClassification({
       query,
       filterType,
-      classification:
-      liveResult.state === 'unavailable' || liveResult.state === 'timeout'
-        ? 'unavailable'
-        : liveResult.state === 'parse_error'
-          ? 'parse-error'
-          : 'empty',
+      classification: 'unavailable',
       resultCount: 0,
       aliasExpandedQuery,
       broaderQuery,
-      finalLiveQuery: matchedCandidate.query,
+      finalLiveQuery: matchedCompanyCandidate.query,
     });
+
+    return {
+      companies: [],
+      dataState: 'no_results',
+      resultState:
+        companyLiveResult?.state === 'parse_error' || businessLiveResult.state === 'parse_error'
+          ? 'parse_error'
+          : companyLiveResult?.state === 'timeout' || businessLiveResult.state === 'timeout'
+            ? 'live_timeout'
+            : 'live_unavailable',
+      query,
+      filterType,
+      apiMessage:
+        companyLiveResult?.message ??
+        businessLiveResult.message ??
+        '暫時無法取得即時公開資料，請稍後再試。',
+      helperText:
+        companyLiveResult?.state === 'timeout' || businessLiveResult.state === 'timeout'
+          ? '建議稍後再試，或直接改用 8 碼統一編號查詢。'
+          : undefined,
+      searchNotes: [
+        '建議優先使用統一編號查詢，結果通常更準確。',
+        'For best results, use the 8-digit Business ID.',
+        ...matchedCompanyCandidate.notes,
+      ],
+    };
+  }
+
+  const noResultsMessage = '未找到相符登記資料。';
+
+  logSearchClassification({
+    query,
+    filterType,
+    classification: 'empty',
+    resultCount: 0,
+    aliasExpandedQuery,
+    broaderQuery,
+    finalLiveQuery: matchedCompanyCandidate.query,
+  });
 
   return {
     companies: [],
     dataState: 'no_results',
-    resultState:
-      liveResult.state === 'timeout'
-        ? 'live_timeout'
-        : liveResult.state === 'unavailable'
-          ? 'live_unavailable'
-          : liveResult.state === 'parse_error'
-            ? 'parse_error'
-            : 'live_zero_results',
+    resultState: 'live_zero_results',
     query,
     filterType,
-    apiMessage: liveResult.message,
+    apiMessage: noResultsMessage,
     helperText:
-      liveResult.state === 'not_found'
-        ? '可能原因包括：使用了簡稱、登記名稱不同、資料尚未更新，或目前查詢範圍尚未涵蓋。建議改用完整公司登記名稱或統一編號查詢。'
-        : liveResult.state === 'timeout'
-          ? '建議稍後再試，或直接改用 8 碼統一編號查詢。'
-          : undefined,
+      '可能原因包括：使用了簡稱、登記名稱不同、資料尚未更新，或目前查詢範圍尚未涵蓋。建議使用完整名稱或統一編號再次查詢。',
     searchNotes: [
       '建議優先使用統一編號查詢，結果通常更準確。',
       'For best results, use the 8-digit Business ID.',
-      ...matchedCandidate.notes,
+      ...matchedCompanyCandidate.notes,
     ],
   };
 }

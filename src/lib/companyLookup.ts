@@ -1,5 +1,9 @@
 import { getCompanyByBan } from '@/lib/mockCompanies';
-import { fetchMoeaCompanyByBan, isMoeaLookupDisabled } from '@/lib/sources/moea';
+import {
+  fetchMoeaBusinessByBan,
+  fetchMoeaCompanyByBan,
+  isMoeaLookupDisabled,
+} from '@/lib/sources/moea';
 import { validateBan } from '@/lib/validation';
 import type { Company } from '@/types/company';
 
@@ -9,7 +13,8 @@ export interface CompanyLookupResult {
   lookupState:
     | 'invalid_ban'
     | 'lookup_disabled'
-    | 'live_success'
+    | 'live_company_success'
+    | 'live_business_success'
     | 'live_timeout'
     | 'live_unavailable'
     | 'live_parse_error'
@@ -17,6 +22,7 @@ export interface CompanyLookupResult {
     | 'fallback_mock'
     | 'unavailable_no_mock';
   apiMessage?: string;
+  sourceWarnings?: string[];
 }
 
 export async function getCompanyDetailByBan(ban: string): Promise<CompanyLookupResult> {
@@ -32,50 +38,113 @@ export async function getCompanyDetailByBan(ban: string): Promise<CompanyLookupR
   const mockCompany = getCompanyByBan(parsedBan.data);
 
   if (isMoeaLookupDisabled()) {
-    // TODO: Add a Supabase caching layer before falling back to mock data.
     return mockCompany
       ? { company: mockCompany, dataState: 'mock', lookupState: 'lookup_disabled' }
       : { company: null, dataState: 'not_found', lookupState: 'lookup_disabled' };
   }
 
-  const moeaResult = await fetchMoeaCompanyByBan(parsedBan.data);
-  if (moeaResult.state === 'found' && moeaResult.company) {
+  const [companyResult, businessResult] = await Promise.all([
+    fetchMoeaCompanyByBan(parsedBan.data),
+    fetchMoeaBusinessByBan(parsedBan.data),
+  ]);
+
+  if (companyResult.state === 'found' && companyResult.company) {
     return {
-      company: moeaResult.company,
+      company: companyResult.company,
       dataState: 'real',
-      lookupState: 'live_success',
+      lookupState: 'live_company_success',
+      sourceWarnings:
+        businessResult.state === 'unavailable' ||
+        businessResult.state === 'timeout' ||
+        businessResult.state === 'parse_error'
+          ? ['部分公開資料來源暫時無法回應。']
+          : undefined,
+    };
+  }
+
+  if (businessResult.state === 'found' && businessResult.company) {
+    return {
+      company: businessResult.company,
+      dataState: 'real',
+      lookupState: 'live_business_success',
+      sourceWarnings:
+        companyResult.state === 'unavailable' ||
+        companyResult.state === 'timeout' ||
+        companyResult.state === 'parse_error'
+          ? ['部分公開資料來源暫時無法回應。']
+          : undefined,
     };
   }
 
   if (mockCompany) {
+    const sourceWarnings: string[] = [];
+
+    if (
+      companyResult.state === 'unavailable' ||
+      companyResult.state === 'timeout' ||
+      companyResult.state === 'parse_error' ||
+      businessResult.state === 'unavailable' ||
+      businessResult.state === 'timeout' ||
+      businessResult.state === 'parse_error'
+    ) {
+      sourceWarnings.push('部分公開資料來源暫時無法回應。');
+    }
+
     return {
       company: mockCompany,
       dataState: 'mock',
       lookupState: 'fallback_mock',
       apiMessage:
-        moeaResult.state === 'unavailable' ||
-        moeaResult.state === 'timeout' ||
-        moeaResult.state === 'parse_error'
-          ? moeaResult.message
-          : undefined,
+        companyResult.message ??
+        businessResult.message,
+      sourceWarnings: sourceWarnings.length > 0 ? sourceWarnings : undefined,
+    };
+  }
+
+  const allSourcesFailed =
+    ['unavailable', 'timeout', 'parse_error'].includes(companyResult.state) &&
+    ['unavailable', 'timeout', 'parse_error'].includes(businessResult.state);
+
+  if (allSourcesFailed) {
+    const timeoutSeen =
+      companyResult.state === 'timeout' || businessResult.state === 'timeout';
+    const parseSeen =
+      companyResult.state === 'parse_error' || businessResult.state === 'parse_error';
+
+    return {
+      company: null,
+      dataState: 'api_unavailable',
+      apiMessage:
+        companyResult.message ?? businessResult.message ?? '暫時無法取得公開資料，請稍後再試。',
+      lookupState: timeoutSeen
+        ? 'live_timeout'
+        : parseSeen
+          ? 'live_parse_error'
+          : 'unavailable_no_mock',
+      sourceWarnings: ['部分公開資料來源暫時無法回應。'],
     };
   }
 
   if (
-    moeaResult.state === 'unavailable' ||
-    moeaResult.state === 'timeout' ||
-    moeaResult.state === 'parse_error'
+    companyResult.state === 'unavailable' ||
+    companyResult.state === 'timeout' ||
+    companyResult.state === 'parse_error' ||
+    businessResult.state === 'unavailable' ||
+    businessResult.state === 'timeout' ||
+    businessResult.state === 'parse_error'
   ) {
     return {
       company: null,
       dataState: 'api_unavailable',
-      apiMessage: moeaResult.message,
+      apiMessage:
+        companyResult.message ?? businessResult.message ?? '暫時無法取得公開資料，請稍後再試。',
       lookupState:
-        moeaResult.state === 'timeout'
+        companyResult.state === 'timeout' || businessResult.state === 'timeout'
           ? 'live_timeout'
-          : moeaResult.state === 'parse_error'
+          : companyResult.state === 'parse_error' || businessResult.state === 'parse_error'
             ? 'live_parse_error'
             : 'unavailable_no_mock',
+      sourceWarnings: ['部分公開資料來源暫時無法回應。'],
     };
   }
 

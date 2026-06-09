@@ -16,11 +16,13 @@ export const SEARCH_FILTER_VALUES = [
 ] as const;
 
 export const COMPANY_SOURCE_KIND_VALUES = ['real', 'mock'] as const;
+export const SOURCE_TYPE_VALUES = ['moea_company', 'moea_business', 'mock'] as const;
 
 export type Status = (typeof STATUS_VALUES)[number];
 export type EntityType = (typeof ENTITY_TYPE_VALUES)[number];
 export type SearchFilter = (typeof SEARCH_FILTER_VALUES)[number];
 export type CompanySourceKind = (typeof COMPANY_SOURCE_KIND_VALUES)[number];
+export type SourceType = (typeof SOURCE_TYPE_VALUES)[number];
 
 export interface Company {
   ban: string;
@@ -36,8 +38,13 @@ export interface Company {
   source: string;
   sourceUpdated: string;
   entityType: EntityType;
+  entityTypeLabelZh: string;
+  entityTypeLabelEn: string;
   statusLabel: string;
   sourceKind?: CompanySourceKind;
+  sourceType: SourceType;
+  sourceNameZh: string;
+  sourceNameEn: string;
   fetchedAt?: string;
   sourceUrl?: string;
   flags?: string[];

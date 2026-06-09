@@ -8,7 +8,7 @@ A polished, production-oriented frontend prototype for a Taiwan public-record lo
 > 查公司、查雇主、查交易對象。公開資料，一次看懂。
 > Check Taiwan companies, employers, and business partners with public records.
 
-**Status:** Chinese-first validation-ready MVP with live MOEA company lookup, live company keyword search, a restrained English helper layer, and a lightweight deeper-check intake flow
+**Status:** Chinese-first validation-ready MVP with live MOEA company and business registration lookup, combined keyword search, a restrained English helper layer, and a lightweight deeper-check intake flow.
 
 VerifyTW is designed as a Chinese-first Taiwan public-record tool with concise English helper text for Taiwan users plus English-speaking newcomers, job seekers, freelancers, and remote workers.
 It does not provide a full English mode yet.
@@ -18,8 +18,8 @@ It is an independent project by Jeremy Jewell and is not affiliated with any Tai
 
 ### Pages
 - **Landing Page** (`/`) - Hero section with search, trust note, and info cards
-- **Search Results** (`/search`) - Mock search with filter chips and result cards
-- **Company Detail** (`/company/[ban]`) - Public-record-style report page
+- **Search Results** (`/search`) - Live + fallback registration search with filter chips and result cards
+- **Company Detail** (`/company/[ban]`) - Public-record-style registration report page
 - **Data Guide** (`/data`) - What VerifyTW checks, what it does not yet cover
 - **About** (`/about`) - Product explanation and positioning
 - **Deeper Check** (`/deeper-check`) - Lightweight validation request intake
@@ -49,9 +49,9 @@ It is an independent project by Jeremy Jewell and is not affiliated with any Tai
 - **Zod Schemas**: Validation for Company, SearchQuery, Status
 - **Search Function**: Filters mock data by name, BAN, or representative
 - **MOEA Lookup Spike**:
-  - `/company/[ban]` attempts a live MOEA company-registration lookup first, then falls back to mock data
-  - `/search?q=...` attempts a live MOEA company keyword search first, then falls back to mock/local results
-  - keyword search depends on MOEA response speed and registered company names
+  - `/company/[ban]` attempts a live MOEA company-registration lookup and business-registration lookup, then falls back to mock data
+  - `/search?q=...` attempts live MOEA company + business keyword search, then falls back to mock/local results
+  - keyword search depends on MOEA response speed and official registered entity names
   - Business ID lookup is usually more reliable than keyword search
   - alias/common-name expansion is limited and shown transparently in the UI
 - **Deeper Check Flow**: Validated intake form with server-side submission and Email fallback
@@ -103,26 +103,32 @@ npm run build
 npm run start
 ```
 
-## Real-Data Spike: 統一編號 Lookup + Company Keyword Search
+## Real-Data Spike: Business ID Lookup + Multi-source Keyword Search
 
 The current public-data integration spike now covers:
 
-- `/company/[ban]` for 8-digit 統一編號 lookup
-- `/search?q=...` for keyword / company-name search
+- `/company/[ban]` for 8-digit Business ID (`統一編號`) lookup
+- `/search?q=...` for keyword / registration-name search
 
-- Source: MOEA / GCIS company registration public-data endpoints
-- 統一編號 lookup endpoint:
+- Sources: MOEA / GCIS company registration and business registration public-data endpoints
+- company Business ID lookup endpoint:
   - `https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6?$format=json&$filter=Business_Accounting_NO eq {BAN}&$skip=0&$top=1`
 - company keyword search endpoint:
   - `https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C?$format=json&$filter=Company_Name like {QUERY} and Company_Status eq 01&$skip=0&$top=20`
+- business Business ID lookup endpoint:
+  - `https://data.gcis.nat.gov.tw/od/data/api/426D5542-5F05-43EB-83F9-F1300F14E1F1?$format=json&$filter=President_No eq {BAN}&$skip=0&$top=1`
+- business keyword search endpoint:
+  - `https://data.gcis.nat.gov.tw/od/data/api/A1B4CBFF-2D3A-409B-8A78-2AD94F63AE4A?$format=json&$filter=Business_Name like {QUERY} and Business_Current_Status eq 01&$skip=0&$top=20`
 - Behavior:
-  - validates 8-digit 統一編號 before detail lookup
+  - validates 8-digit Business IDs before detail lookup
   - validates search queries before live keyword search
-  - tries live MOEA data first when enabled
-  - normalizes official MOEA fields into the app's `Company` shape
+  - tries live MOEA company + business data first when enabled
+  - normalizes official MOEA fields into the app's shared registration-record shape
+  - combines company and business search results into one list with clear type labels
+  - can partially succeed when one source is available and another is slow or unavailable
 - falls back to mock/local results when live data is unavailable or returns no usable result
 
-Keyword search depends on MOEA response speed and official registered company names.
+Keyword search depends on MOEA response speed and official registered names.
 Business ID lookup is usually more reliable.
 Alias mapping is limited and disclosed in the UI when used.
 
@@ -132,8 +138,8 @@ The current product goal is monetization validation, not building a full busines
 
 What is working now:
 
-- live MOEA company detail lookup by 統一編號
-- live MOEA keyword/company-name search
+- live MOEA company/business detail lookup by Business ID (`統一編號`)
+- live MOEA keyword/registration-name search
 - mock fallback when live results are unavailable or out of scope
 - a manual deeper-check request flow on `/deeper-check`
 - server-side intake suitable for monetization validation
@@ -144,7 +150,7 @@ What is intentionally not built yet:
 - no payment system yet
 - no Supabase/cache yet
 - no MOF cross-check yet
-- no 商業 / 分公司 live coverage yet
+- no branch (`分公司`) live coverage yet
 - no legal, investment, or transaction advice
 - no guarantee of safety
 
@@ -161,6 +167,8 @@ MOEA_LOOKUP_ENABLED=false
 # Override the endpoint for testing or future proxying
 MOEA_COMPANY_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/5F64D864-61CB-4D0D-8AD9-492047CC1EA6
 MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-1367-4B42-9CCA-BC17499EBE8C
+MOEA_BUSINESS_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/426D5542-5F05-43EB-83F9-F1300F14E1F1
+MOEA_BUSINESS_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/A1B4CBFF-2D3A-409B-8A78-2AD94F63AE4A
 
 # Deeper-check intake
 RESEND_API_KEY=re_xxx
@@ -170,11 +178,13 @@ DEEPER_CHECK_FROM_EMAIL=VerifyTW <onboarding@resend.dev>
 
 ### Fallback Rules
 
-- `real data available` → render the real MOEA-backed company detail
+- `real company data available` → render the real MOEA-backed registration detail
+- `real business data available and no company record exists` → render the real MOEA-backed business registration detail
 - `real API unavailable + matching mock record exists` → render the mock record with a calm fallback note
 - `real API unavailable + no matching mock record` → show a respectful unavailable state
 - `real API returns no record + no matching mock record` → show the existing not-found state
-- `live keyword results available` → render MOEA-backed search results
+- `live keyword results available` → render MOEA-backed company/business search results
+- `one live source returns results and another source fails` → render available live results with a partial-source note
 - `live keyword results unavailable + matching mock/local results exist` → render mock/local results with a calm fallback note
 - `live keyword results return no usable result + matching mock/local results exist` → render mock/local results
 - `live keyword results return no usable result + no mock/local result` → show the existing calm no-results state
@@ -222,12 +232,17 @@ The debug endpoint is only available in development unless:
 
 ### Known Limitations
 
-- Live keyword search currently uses the MOEA company dataset only, so `商業` and `分公司` live results are not yet covered.
+- Live lookup now attempts both MOEA company-registration and business-registration records.
+- Live keyword search now queries both company and business sources, but response speed still depends on the external MOEA endpoints.
 - The keyword endpoint is currently filtered to `Company_Status eq 01`, which favors active company registrations.
+- The business keyword endpoint is currently filtered to `Business_Current_Status eq 01`, which favors active business registrations.
+- Field availability may differ between company and business registration records.
+- Search can partially succeed if one source responds and another source is slow or unavailable.
+- Branch (`分公司`) live coverage is still future work.
 - Live keyword search depends on the external MOEA response speed; slow upstream responses can trigger a timeout state.
 - Full registered company names and 8-digit Business IDs are more reliable than short aliases.
 - Alias mapping is intentionally limited and is disclosed in the search UI when used.
-- The MOEA response currently maps to the existing company/search shape; it does not yet include pagination, exact-name matching, tax cross-checks, or caching.
+- The MOEA response currently maps to the app's shared registration/search shape; it does not yet include pagination, exact-name matching, tax cross-checks, or caching.
 - English company names are not provided by the current MOEA BAN endpoint, so live records may omit that field.
 - Public-data availability and response times depend on the external MOEA source.
 
@@ -235,12 +250,14 @@ The debug endpoint is only available in development unless:
 
 - `/company/20828393`
   - Expected: live MOEA company detail if source responds
+- `/search?q=台灣積體電路製造股份有限公司`
+  - Expected: live company result if MOEA responds in time
 - `/company/12345678`
   - Expected: mock fallback/demo data if live disabled or mock exists
 - `/search?q=台積電`
   - Expected: alias path or timeout/clear state
-- `/search?q=台灣積體電路製造股份有限公司`
-  - Expected: live result if MOEA responds in time
+- `/search?q=中台灣物流商業社`
+  - Expected: business-registration result if the business source responds, or mock fallback if using demo data
 - `/search?q=notarealcompanyxyz`
   - Expected: calm zero-results state
 - `/deeper-check`
@@ -296,7 +313,7 @@ src/
 │   ├── validation.ts        # Zod schemas and validation helpers
 │   ├── companyDisplay.ts    # Display labels/helpers
 │   ├── sources/
-│   │   └── moea.ts          # MOEA company-registration lookup + keyword search
+│   │   └── moea.ts          # MOEA company/business registration lookup + keyword search
 │   └── utils.ts             # Helper functions (cn)
 │
 ├── types/
@@ -357,7 +374,7 @@ src/
 
 ## Mock Data
 
-7 sample companies for testing search, filtering, and detail pages:
+7 sample records for testing search, filtering, and detail pages:
 
 ```json
 {

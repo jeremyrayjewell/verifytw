@@ -154,6 +154,45 @@ The safest next step is to ingest the CSV/ZIP dataset into a generated local ind
 
 Public records remain preliminary reference only.
 
+### Local MOF Ingestion
+
+The local MOF ingestion workflow expects the official CSV to exist at:
+
+- `data/mof/BGMOPEN1.csv`
+
+PowerShell setup:
+
+```powershell
+New-Item -ItemType Directory -Force data/mof, data/generated
+Test-Path data/mof/BGMOPEN1.csv
+```
+
+Run a small limited test:
+
+```powershell
+npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.sample.json --limit 1000
+```
+
+Run the full index:
+
+```powershell
+npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.json
+```
+
+Run the fixture parser check:
+
+```powershell
+npm run build:mof-index -- --input src/lib/sources/fixtures/mof-tax-sample.csv --output data/generated/mof-tax-index.fixture.json
+```
+
+Notes:
+
+- `data/mof/BGMOPEN1.csv` must not be committed
+- generated JSON files under `data/generated/` are ignored by Git
+- this is local/prototype ingestion only
+- MOF is not yet shown as a live UI source
+- MOF and MOEA fields such as capital, address, and dates may differ because source definitions and update timing may differ
+
 ## Validation-ready MVP
 
 The current product goal is monetization validation, not building a full business platform yet.

@@ -11,3 +11,7 @@ out
 *.log
 dist
 build
+data/mof/
+data/generated/
+data/raw/
+*.zip

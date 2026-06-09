@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mof-index": "tsx scripts/build-mof-tax-index.ts",
     "start": "next start",
     "lint": "next lint"
   },
@@ -27,6 +28,7 @@
     "autoprefixer": "^10.4.14",
     "eslint": "^8.45.0",
     "eslint-config-next": "^14.0.0",
-    "postcss": "^8.4.24"
+    "postcss": "^8.4.24",
+    "tsx": "^4.19.2"
   }
 }

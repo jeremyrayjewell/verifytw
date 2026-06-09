@@ -41,11 +41,11 @@ export interface NormalizedMofTaxRegistrationRecord {
   headOfficeBusinessId?: string;
   taxRegistrationName?: string;
   taxRegistrationAddress?: string;
-  capitalAmount?: string;
+  capitalAmount?: number;
   establishedDate?: string;
   organizationType?: string;
-  usesUniformInvoice?: boolean;
-  industryCodes: MofIndustryCode[];
+  usesUniformInvoice?: 'Y' | 'N';
+  industries: MofIndustryCode[];
   sourceType: 'mof_tax_registration';
   sourceNameZh: typeof MOF_SOURCE_NAME_ZH;
   sourceNameEn: typeof MOF_SOURCE_NAME_EN;
@@ -81,18 +81,28 @@ export function getMofTaxResearchNotes() {
   };
 }
 
-function normalizeBoolean(value?: string): boolean | undefined {
+function normalizeCapitalAmount(value?: string): number | undefined {
+  const raw = value?.replace(/,/g, '').trim();
+  if (!raw) {
+    return undefined;
+  }
+
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function normalizeUniformInvoiceFlag(value?: string): 'Y' | 'N' | undefined {
   const raw = value?.trim();
   if (!raw) {
     return undefined;
   }
 
   if (/(是|Y|Yes|true|1)/i.test(raw)) {
-    return true;
+    return 'Y';
   }
 
   if (/(否|N|No|false|0)/i.test(raw)) {
-    return false;
+    return 'N';
   }
 
   return undefined;
@@ -135,11 +145,11 @@ export function normalizeMofTaxRegistrationRecord(
     headOfficeBusinessId: row['總機構統一編號']?.trim() || undefined,
     taxRegistrationName: row['營業人名稱']?.trim() || undefined,
     taxRegistrationAddress: row['營業地址']?.trim() || undefined,
-    capitalAmount: row['資本額']?.trim() || undefined,
+    capitalAmount: normalizeCapitalAmount(row['資本額']),
     establishedDate: row['設立日期']?.trim() || undefined,
     organizationType: row['組織別名稱']?.trim() || undefined,
-    usesUniformInvoice: normalizeBoolean(row['使用統一發票']),
-    industryCodes: normalizeIndustryCodes(row),
+    usesUniformInvoice: normalizeUniformInvoiceFlag(row['使用統一發票']),
+    industries: normalizeIndustryCodes(row),
     sourceType: 'mof_tax_registration',
     sourceNameZh: MOF_SOURCE_NAME_ZH,
     sourceNameEn: MOF_SOURCE_NAME_EN,

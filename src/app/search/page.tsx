@@ -47,14 +47,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           {query &&
             (searchResult?.dataState === 'live' || searchResult?.dataState === 'live_partial') && (
               <div className="mt-lg">
-                <NoticeBox
-                  type="info"
-                  title={
-                    searchResult.dataState === 'live_partial'
-                      ? '補充說明'
-                      : '資料來源'
-                  }
-                >
+                <NoticeBox type="info" title="資料來源">
                   <div className="space-y-xs">
                     <p>目前顯示經濟部商工登記公開資料。</p>
                     <p className="text-xs text-neutral-600">

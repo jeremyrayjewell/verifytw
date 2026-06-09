@@ -13,7 +13,7 @@ export function DeeperCheckCTA({ className }: DeeperCheckCTAProps) {
           <div className="max-w-2xl">
             <div className="inline-flex items-center gap-sm text-sm font-medium text-data-teal-text mb-md">
               <SearchCheck size={18} />
-              Request a deeper check
+              人工查證
             </div>
             <h2 className="text-2xl font-bold text-main-ink mb-md">
               需要更完整的查證？
@@ -30,9 +30,12 @@ export function DeeperCheckCTA({ className }: DeeperCheckCTAProps) {
           <div className="flex-shrink-0">
             <Link
               href="/deeper-check"
-              className="inline-flex items-center gap-sm px-xl py-md rounded-base bg-civic-blue text-surface font-medium hover:bg-opacity-90 transition-colors focus-ring"
+              className="inline-flex items-center gap-sm rounded-base bg-civic-blue px-xl py-md font-medium text-surface transition-colors hover:bg-opacity-90 focus-ring"
             >
-              申請進一步查證
+              <span className="flex flex-col items-start leading-tight">
+                <span>申請進一步查證</span>
+                <span className="text-xs text-surface/85">Request a deeper check</span>
+              </span>
               <ArrowRight size={18} />
             </Link>
           </div>

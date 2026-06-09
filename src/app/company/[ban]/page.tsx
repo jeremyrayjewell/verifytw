@@ -115,7 +115,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
       <section className="border-b-2 border-form-gray bg-rice-paper px-lg py-2xl">
         <div className="mx-auto max-w-[860px] space-y-lg">
           {showRealNotice && (
-            <NoticeBox type="info" title="公開資料來源">
+            <NoticeBox type="info" title="資料來源">
               <div className="space-y-xs">
                 <p>公開資料來源：經濟部商工登記公開資料</p>
                 <p className="text-xs text-neutral-600">

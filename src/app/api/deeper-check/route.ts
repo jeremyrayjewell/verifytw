@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { validateDeeperCheckRequest } from '@/lib/validation';
 
-const MISSING_CONFIG_MESSAGE = '暫時無法送出申請。你可以稍後再試，或使用 Email 備用方式聯絡我們。';
+const SUBMISSION_FAILED_MESSAGE =
+  '暫時無法送出申請。你可以稍後再試，或使用 Email 備用方式聯絡我們。';
+const INVALID_REQUEST_MESSAGE = '請確認表單內容後再試一次。';
 
 function getSubmittedAt() {
   return new Intl.DateTimeFormat('zh-TW', {
@@ -69,24 +71,57 @@ function buildHtmlBody(data: {
   `;
 }
 
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  return 'Unknown error';
+}
+
+function getMissingEnvVarNames() {
+  const requiredEnvVars = [
+    'RESEND_API_KEY',
+    'DEEPER_CHECK_TO_EMAIL',
+    'DEEPER_CHECK_FROM_EMAIL',
+  ] as const;
+
+  return requiredEnvVars.filter((name) => !process.env[name]);
+}
+
 export async function POST(request: Request) {
   let payload: unknown;
 
   try {
     payload = await request.json();
-  } catch {
+  } catch (error) {
+    console.error('[verifytw][deeper-check] Failed to parse request JSON.', {
+      error: getErrorMessage(error),
+    });
+
     return NextResponse.json(
-      { success: false, message: '送出內容格式不正確。' },
+      { success: false, message: INVALID_REQUEST_MESSAGE },
       { status: 400 }
     );
   }
 
   const parsed = validateDeeperCheckRequest(payload);
   if (!parsed.success) {
+    console.error('[verifytw][deeper-check] Validation failed.', {
+      issues: parsed.error.issues.map((issue) => ({
+        path: issue.path.join('.') || 'form',
+        message: issue.message,
+      })),
+    });
+
     return NextResponse.json(
       {
         success: false,
-        message: parsed.error.issues[0]?.message ?? '請確認表單內容',
+        message: parsed.error.issues[0]?.message ?? INVALID_REQUEST_MESSAGE,
         fieldErrors: parsed.error.flatten().fieldErrors,
       },
       { status: 400 }
@@ -94,51 +129,55 @@ export async function POST(request: Request) {
   }
 
   if (parsed.data.companyWebsite) {
-    if (process.env.NODE_ENV === 'development') {
-      console.warn('[verifytw][deeper-check] Honeypot field was filled; request accepted silently.');
-    }
-
+    console.warn('[verifytw][deeper-check] Honeypot field was filled; request accepted silently.');
     return NextResponse.json({ success: true });
   }
 
-  const apiKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.DEEPER_CHECK_TO_EMAIL;
-  const fromEmail = process.env.DEEPER_CHECK_FROM_EMAIL;
-
-  if (!apiKey || !toEmail || !fromEmail) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error(
-        '[verifytw][deeper-check] Missing Resend configuration. Expected RESEND_API_KEY, DEEPER_CHECK_TO_EMAIL, and DEEPER_CHECK_FROM_EMAIL.'
-      );
-    }
+  const missingEnvVars = getMissingEnvVarNames();
+  if (missingEnvVars.length > 0) {
+    console.error('[verifytw][deeper-check] Missing Resend configuration.', {
+      missingEnvVars,
+    });
 
     return NextResponse.json(
-      { success: false, message: MISSING_CONFIG_MESSAGE },
+      { success: false, message: SUBMISSION_FAILED_MESSAGE },
       { status: 503 }
     );
   }
 
+  const resend = new Resend(process.env.RESEND_API_KEY!);
+
   try {
-    const resend = new Resend(apiKey);
-    await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
+    const result = await resend.emails.send({
+      from: process.env.DEEPER_CHECK_FROM_EMAIL!,
+      to: process.env.DEEPER_CHECK_TO_EMAIL!,
       replyTo: parsed.data.email,
       subject: `VerifyTW deeper check request: ${parsed.data.targetName}`,
       text: buildPlainTextBody(parsed.data),
       html: buildHtmlBody(parsed.data),
     });
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    if (process.env.NODE_ENV === 'development') {
-      console.error('[verifytw][deeper-check] Failed to send Resend email.', error);
+    if (result.error) {
+      console.error('[verifytw][deeper-check] Resend API returned an error.', {
+        name: result.error.name,
+        message: result.error.message,
+      });
+
+      return NextResponse.json(
+        { success: false, message: SUBMISSION_FAILED_MESSAGE },
+        { status: 502 }
+      );
     }
 
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[verifytw][deeper-check] Failed to send Resend email.', {
+      error: getErrorMessage(error),
+    });
+
     return NextResponse.json(
-      { success: false, message: MISSING_CONFIG_MESSAGE },
+      { success: false, message: SUBMISSION_FAILED_MESSAGE },
       { status: 502 }
     );
   }
 }
-

@@ -468,6 +468,15 @@ MOEA_COMPANY_KEYWORD_API_BASE=https://data.gcis.nat.gov.tw/od/data/api/6BBA2268-
 - This flow exists to validate demand for a paid/manual deeper-check service before building a larger platform
 - `/sample-report` shows a fictional/demo sample so users can preview the manual report format without implying a claim about any real company
 
+### Production Checklist For /deeper-check
+
+- Set `RESEND_API_KEY`
+- Set `DEEPER_CHECK_TO_EMAIL`
+- Set `DEEPER_CHECK_FROM_EMAIL`
+- Confirm the sender address or sending domain is allowed in Resend
+- Redeploy after changing Netlify environment variables
+- Test `/deeper-check` on production after deployment
+
 ### Manual Deeper-check Offer
 
 - VerifyTW is an independent project by Jeremy Jewell and is not affiliated with any Taiwan government agency

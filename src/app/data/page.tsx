@@ -9,7 +9,7 @@ export default function DataPage() {
           <p className="mb-sm text-sm font-medium text-data-teal-text">Data guide</p>
           <h1 className="mb-md text-3xl font-bold text-main-ink md:text-4xl">資料說明</h1>
           <p className="text-base leading-relaxed text-neutral-700">
-            VerifyTW 台企查整理目前可取得的商工登記公開資料，協助你更快理解基本資訊、查詢範圍與目前限制。
+            VerifyTW 台企查整理目前可取得的商工登記公開資料，協助你更快理解基本資訊、查詢範圍與資料範圍說明。
           </p>
         </section>
 
@@ -70,25 +70,26 @@ export default function DataPage() {
         </section>
 
         <section className="space-y-lg rounded-base border-2 border-form-gray bg-surface p-xl">
-          <h2 className="text-2xl font-bold text-main-ink">目前限制</h2>
-          <p className="text-sm text-neutral-600">Current limitations</p>
-          <ul className="grid gap-md sm:grid-cols-2 text-sm text-neutral-700">
-            {[
-              '關鍵字查詢速度取決於外部 MOEA 回應時間',
-              '不同登記類型的欄位完整度可能不同',
-              '分公司資料尚未納入 live 查詢',
-              '財政部稅籍資料尚未交叉比對',
-              '不是所有商業類型都保證能即時查到',
-              '查詢結果僅供初步參考',
-            ].map((item) => (
-              <li
-                key={item}
-                className="rounded-base border border-form-gray bg-rice-paper px-lg py-md"
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
+          <h2 className="text-2xl font-bold text-main-ink">資料範圍說明</h2>
+          <p className="text-sm text-neutral-600">Data coverage notes</p>
+          <div className="space-y-md text-base leading-relaxed text-neutral-700">
+            <p>目前即時查詢主要涵蓋公司登記與商業登記公開資料。</p>
+            <p className="text-sm text-neutral-600">
+              Live lookup currently covers public company and business registration records.
+            </p>
+            <p>不同登記類型提供的欄位可能不同。</p>
+            <p className="text-sm text-neutral-600">
+              Available fields may differ by registration type.
+            </p>
+            <p>分公司資料與財政部稅籍交叉比對尚未納入。</p>
+            <p className="text-sm text-neutral-600">
+              Branch records and MOF tax cross-checks are not included yet.
+            </p>
+            <p>查詢結果僅供初步參考，建議與對方提供的文件交叉確認。</p>
+            <p className="text-sm text-neutral-600">
+              Results are for preliminary reference only and should be cross-checked against documents provided by the counterparty.
+            </p>
+          </div>
         </section>
 
         <section className="space-y-lg rounded-base border-2 border-form-gray bg-support-blue-gray p-xl">

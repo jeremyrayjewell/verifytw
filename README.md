@@ -173,16 +173,22 @@ Run a small limited test:
 npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.sample.json --limit 1000
 ```
 
-Run the full index:
+Run the full index as JSONL:
 
 ```powershell
-npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.json
+npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.jsonl --format jsonl
 ```
 
 Run the fixture parser check:
 
 ```powershell
-npm run build:mof-index -- --input src/lib/sources/fixtures/mof-tax-sample.csv --output data/generated/mof-tax-index.fixture.json
+npm run build:mof-index -- --input src/lib/sources/fixtures/mof-tax-sample.csv --output data/generated/mof-tax-index.fixture.json --format json
+```
+
+Optional selected-ID JSON extract:
+
+```powershell
+npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.selected.json --format json --only-ids 20828393,22099131
 ```
 
 Notes:
@@ -192,6 +198,8 @@ Notes:
 - this is local/prototype ingestion only
 - MOF is not yet shown as a live UI source
 - MOF and MOEA fields such as capital, address, and dates may differ because source definitions and update timing may differ
+- use JSON output only for fixture runs, selected IDs, or limited samples
+- do not run full no-limit JSON output; use `--format jsonl` for the full MOF dataset
 
 ## Validation-ready MVP
 

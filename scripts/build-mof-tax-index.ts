@@ -1,7 +1,8 @@
-import { createReadStream } from 'node:fs';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { createReadStream, createWriteStream } from 'node:fs';
+import { mkdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import readline from 'node:readline';
+import { once } from 'node:events';
 import {
   MOF_SOURCE_NAME_EN,
   MOF_SOURCE_NAME_ZH,
@@ -14,6 +15,8 @@ interface CliOptions {
   input: string;
   output: string;
   limit?: number;
+  format: 'json' | 'jsonl';
+  onlyIds?: Set<string>;
 }
 
 interface OutputShape {
@@ -31,6 +34,8 @@ function parseCliArgs(argv: string[]): CliOptions {
   let input = '';
   let output = '';
   let limit: number | undefined;
+  let format: 'json' | 'jsonl' = 'json';
+  let onlyIds: Set<string> | undefined;
   const positionalArgs: string[] = [];
 
   while (args.length > 0) {
@@ -60,6 +65,30 @@ function parseCliArgs(argv: string[]): CliOptions {
       continue;
     }
 
+    if (arg === '--format') {
+      const rawFormat = args.shift();
+      if (rawFormat !== 'json' && rawFormat !== 'jsonl') {
+        throw new Error('`--format` must be either `json` or `jsonl`.');
+      }
+      format = rawFormat;
+      continue;
+    }
+
+    if (arg === '--only-ids') {
+      const rawIds = args.shift() ?? '';
+      const parsedIds = rawIds
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean);
+
+      if (parsedIds.length === 0 || parsedIds.some((value) => !/^\d{8}$/.test(value))) {
+        throw new Error('`--only-ids` must be a comma-separated list of 8-digit Business IDs.');
+      }
+
+      onlyIds = new Set(parsedIds);
+      continue;
+    }
+
     positionalArgs.push(arg);
   }
 
@@ -71,19 +100,26 @@ function parseCliArgs(argv: string[]): CliOptions {
     output = positionalArgs[1];
   }
 
-  if (limit === undefined && positionalArgs[2]) {
-    const parsed = Number(positionalArgs[2]);
-    if (!Number.isFinite(parsed) || parsed <= 0) {
-      throw new Error('`--limit` must be a positive number.');
+  for (const positional of positionalArgs.slice(2)) {
+    if (positional === 'json' || positional === 'jsonl') {
+      format = positional;
+      continue;
     }
-    limit = parsed;
+
+    if (limit === undefined) {
+      const parsed = Number(positional);
+      if (!Number.isFinite(parsed) || parsed <= 0) {
+        throw new Error('`--limit` must be a positive number.');
+      }
+      limit = parsed;
+    }
   }
 
   if (!input || !output) {
-    throw new Error('Usage: --input <path> --output <path> [--limit <number>]');
+    throw new Error('Usage: --input <path> --output <path> [--limit <number>] [--format json|jsonl] [--only-ids 12345678,87654321]');
   }
 
-  return { input, output, limit };
+  return { input, output, limit, format, onlyIds };
 }
 
 function stripUtf8Bom(content: string): string {
@@ -138,6 +174,17 @@ async function buildIndex(options: CliOptions) {
   const inputPath = path.resolve(options.input);
   const outputPath = path.resolve(options.output);
   const outputDir = path.dirname(outputPath);
+  const inputStats = await stat(inputPath);
+
+  if (options.format === 'json' && options.limit === undefined && !options.onlyIds) {
+    const maxSafeJsonInputBytes = 5 * 1024 * 1024;
+    if (inputStats.size > maxSafeJsonInputBytes) {
+      throw new Error(
+        'Full JSON output can exceed Node string limits. Use --format jsonl for the full MOF dataset, or pass --limit for a small JSON sample.'
+      );
+    }
+  }
+
   const stream = createReadStream(inputPath, { encoding: 'utf8' });
   const lineReader = readline.createInterface({
     input: stream,
@@ -146,8 +193,16 @@ async function buildIndex(options: CliOptions) {
 
   let headers: string[] | null = null;
   const records: Record<string, NormalizedMofTaxRegistrationRecord> = {};
+  const jsonlWriter =
+    options.format === 'jsonl'
+      ? createWriteStream(outputPath, { encoding: 'utf8' })
+      : null;
   let skippedRowCount = 0;
   let processedValidRows = 0;
+
+  if (jsonlWriter) {
+    await mkdir(outputDir, { recursive: true });
+  }
 
   for await (const rawLine of lineReader) {
     const line = headers ? rawLine : stripUtf8Bom(rawLine);
@@ -175,13 +230,24 @@ async function buildIndex(options: CliOptions) {
       continue;
     }
 
+    if (options.onlyIds && !options.onlyIds.has(businessId)) {
+      continue;
+    }
+
     const normalizedRecord = normalizeMofTaxRegistrationRecord(rawRecord);
     if (!normalizedRecord) {
       skippedRowCount += 1;
       continue;
     }
 
-    records[normalizedRecord.businessId] = normalizedRecord;
+    if (jsonlWriter) {
+      const canContinue = jsonlWriter.write(`${JSON.stringify(normalizedRecord)}\n`);
+      if (!canContinue) {
+        await once(jsonlWriter, 'drain');
+      }
+    } else {
+      records[normalizedRecord.businessId] = normalizedRecord;
+    }
     processedValidRows += 1;
 
     if (options.limit && processedValidRows >= options.limit) {
@@ -189,25 +255,36 @@ async function buildIndex(options: CliOptions) {
     }
   }
 
-  const output: OutputShape = {
-    metadata: {
-      sourceNameZh: MOF_SOURCE_NAME_ZH,
-      sourceNameEn: MOF_SOURCE_NAME_EN,
-      generatedAt: new Date().toISOString(),
-      recordCount: Object.keys(records).length,
-    },
-    records,
-  };
+  if (jsonlWriter) {
+    jsonlWriter.end();
+    await once(jsonlWriter, 'finish');
+  }
 
-  await mkdir(outputDir, { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`, 'utf8');
+  const recordCount = jsonlWriter ? processedValidRows : Object.keys(records).length;
+
+  if (!jsonlWriter) {
+    const output: OutputShape = {
+      metadata: {
+        sourceNameZh: MOF_SOURCE_NAME_ZH,
+        sourceNameEn: MOF_SOURCE_NAME_EN,
+        generatedAt: new Date().toISOString(),
+        recordCount,
+      },
+      records,
+    };
+
+    await mkdir(outputDir, { recursive: true });
+    await writeFile(outputPath, `${JSON.stringify(output, null, 2)}\n`, 'utf8');
+  }
 
   console.log('MOF tax index generated');
   console.log(`Input: ${inputPath}`);
   console.log(`Output: ${outputPath}`);
-  console.log(`Valid records: ${output.metadata.recordCount}`);
+  console.log(`Format: ${options.format}`);
+  console.log(`Valid records: ${recordCount}`);
   console.log(`Skipped rows: ${skippedRowCount}`);
   console.log(`Limit used: ${options.limit ?? 'none'}`);
+  console.log(`Only IDs used: ${options.onlyIds ? [...options.onlyIds].join(',') : 'none'}`);
 }
 
 async function main() {

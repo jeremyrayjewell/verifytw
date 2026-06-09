@@ -132,6 +132,28 @@ Keyword search depends on MOEA response speed and official registered names.
 Business ID lookup is usually more reliable.
 Alias mapping is limited and disclosed in the UI when used.
 
+## MOF Research Spike
+
+MOEA is currently the active live source authority for company and business registration lookups.
+
+The next true cross-source candidate is the MOF tax-business registration dataset:
+
+- Dataset: `全國營業(稅籍)登記資料集`
+- Provider: Fiscal Information Agency, Ministry of Finance
+- Official dataset page: `https://data.gov.tw/dataset/9400`
+
+Current research indicates:
+
+- the dataset is published as a file dataset, with a CSV resource and a ZIP download reference
+- the dataset page says the open file covers active tax registrations only
+- the update frequency is listed as daily
+- this is not yet treated as a proven lightweight per-request lookup API in this repo
+
+Because of that, VerifyTW does not yet use MOF as a live production lookup source.
+The safest next step is to ingest the CSV/ZIP dataset into a generated local index or future cache layer, then perform Business ID cross-checks against that indexed data.
+
+Public records remain preliminary reference only.
+
 ## Validation-ready MVP
 
 The current product goal is monetization validation, not building a full business platform yet.
@@ -234,6 +256,8 @@ The debug endpoint is only available in development unless:
 
 - Live lookup now attempts both MOEA company-registration and business-registration records.
 - Live keyword search now queries both company and business sources, but response speed still depends on the external MOEA endpoints.
+- MOF tax-business registration is being investigated as the next true cross-source check, but it is not live in production yet.
+- Early research suggests MOF integration may require CSV/ZIP ingestion and caching rather than simple per-request runtime fetches.
 - The keyword endpoint is currently filtered to `Company_Status eq 01`, which favors active company registrations.
 - The business keyword endpoint is currently filtered to `Business_Current_Status eq 01`, which favors active business registrations.
 - Field availability may differ between company and business registration records.

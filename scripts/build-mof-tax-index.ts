@@ -19,6 +19,8 @@ interface CliOptions {
   onlyIds?: Set<string>;
 }
 
+type CliValueKey = 'input' | 'output' | 'limit' | 'format' | 'only-ids';
+
 interface OutputShape {
   metadata: {
     sourceNameZh: string;
@@ -30,96 +32,152 @@ interface OutputShape {
 }
 
 function parseCliArgs(argv: string[]): CliOptions {
-  const args = [...argv];
-  let input = '';
-  let output = '';
-  let limit: number | undefined;
-  let format: 'json' | 'jsonl' = 'json';
-  let onlyIds: Set<string> | undefined;
-  const positionalArgs: string[] = [];
+  const values: Partial<Record<CliValueKey, string>> = {};
+  const unexpectedArgs: string[] = [];
+  const knownKeys = new Set<CliValueKey>(['input', 'output', 'limit', 'format', 'only-ids']);
+  let parsedFlagCount = 0;
 
-  while (args.length > 0) {
-    const arg = args.shift();
-
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index];
     if (!arg) {
       continue;
     }
 
-    if (arg === '--input') {
-      input = args.shift() ?? '';
+    if (!arg.startsWith('--')) {
+      unexpectedArgs.push(arg);
       continue;
     }
 
-    if (arg === '--output') {
-      output = args.shift() ?? '';
-      continue;
+    const withoutPrefix = arg.slice(2);
+    const equalIndex = withoutPrefix.indexOf('=');
+    const key = equalIndex >= 0 ? withoutPrefix.slice(0, equalIndex) : withoutPrefix;
+
+    if (!knownKeys.has(key as CliValueKey)) {
+      throw new Error(`Unknown option: --${key}`);
     }
 
-    if (arg === '--limit') {
-      const rawLimit = args.shift();
-      const parsed = Number(rawLimit);
-      if (!rawLimit || !Number.isFinite(parsed) || parsed <= 0) {
-        throw new Error('`--limit` must be a positive number.');
+    let rawValue =
+      equalIndex >= 0 ? withoutPrefix.slice(equalIndex + 1) : undefined;
+
+    if (rawValue === undefined) {
+      const next = argv[index + 1];
+      if (!next || next.startsWith('--')) {
+        throw new Error(`Missing value for --${key}`);
       }
-      limit = parsed;
-      continue;
-    }
+      if (key === 'only-ids') {
+        const collectedValues: string[] = [];
+        let lookaheadIndex = index + 1;
 
-    if (arg === '--format') {
-      const rawFormat = args.shift();
-      if (rawFormat !== 'json' && rawFormat !== 'jsonl') {
-        throw new Error('`--format` must be either `json` or `jsonl`.');
+        while (lookaheadIndex < argv.length) {
+          const candidate = argv[lookaheadIndex];
+          if (!candidate || candidate.startsWith('--')) {
+            break;
+          }
+
+          collectedValues.push(candidate);
+          lookaheadIndex += 1;
+        }
+
+        rawValue = collectedValues.join(',');
+        index = lookaheadIndex - 1;
+      } else {
+        rawValue = next;
+        index += 1;
       }
-      format = rawFormat;
-      continue;
     }
 
-    if (arg === '--only-ids') {
-      const rawIds = args.shift() ?? '';
-      const parsedIds = rawIds
-        .split(',')
-        .map((value) => value.trim())
-        .filter(Boolean);
-
-      if (parsedIds.length === 0 || parsedIds.some((value) => !/^\d{8}$/.test(value))) {
-        throw new Error('`--only-ids` must be a comma-separated list of 8-digit Business IDs.');
-      }
-
-      onlyIds = new Set(parsedIds);
-      continue;
+    if (!rawValue) {
+      throw new Error(`Missing value for --${key}`);
     }
 
-    positionalArgs.push(arg);
+    values[key as CliValueKey] = rawValue;
+    parsedFlagCount += 1;
   }
 
-  if (!input && positionalArgs[0]) {
-    input = positionalArgs[0];
-  }
-
-  if (!output && positionalArgs[1]) {
-    output = positionalArgs[1];
-  }
-
-  for (const positional of positionalArgs.slice(2)) {
-    if (positional === 'json' || positional === 'jsonl') {
-      format = positional;
-      continue;
+  if (parsedFlagCount === 0 && unexpectedArgs.length > 0) {
+    if (unexpectedArgs.length < 2) {
+      throw new Error(
+        `Unexpected positional arguments: ${unexpectedArgs.join(', ')}. Use --input, --output, --limit, --format, and --only-ids explicitly.`
+      );
     }
 
-    if (limit === undefined) {
-      const parsed = Number(positional);
-      if (!Number.isFinite(parsed) || parsed <= 0) {
-        throw new Error('`--limit` must be a positive number.');
+    values.input = unexpectedArgs[0];
+    values.output = unexpectedArgs[1];
+
+    for (const positional of unexpectedArgs.slice(2)) {
+      const trimmed = positional.trim();
+
+      if (!trimmed) {
+        continue;
       }
-      limit = parsed;
+
+      if ((trimmed === 'json' || trimmed === 'jsonl') && values.format === undefined) {
+        values.format = trimmed;
+        continue;
+      }
+
+      if (/^\d+$/.test(trimmed) && values.limit === undefined) {
+        values.limit = trimmed;
+        continue;
+      }
+
+      if (values['only-ids'] === undefined) {
+        values['only-ids'] = trimmed;
+        continue;
+      }
+
+      throw new Error(
+        `Unexpected positional arguments: ${unexpectedArgs.join(', ')}. Use --input, --output, --limit, --format, and --only-ids explicitly.`
+      );
     }
+  } else if (unexpectedArgs.length > 0) {
+    throw new Error(
+      `Unexpected positional arguments: ${unexpectedArgs.join(', ')}. Use --input, --output, --limit, --format, and --only-ids explicitly.`
+    );
   }
+
+  const input = values.input?.trim() ?? '';
+  const output = values.output?.trim() ?? '';
 
   if (!input || !output) {
     throw new Error('Usage: --input <path> --output <path> [--limit <number>] [--format json|jsonl] [--only-ids 12345678,87654321]');
   }
 
-  return { input, output, limit, format, onlyIds };
+  let limit: number | undefined;
+  if (values.limit !== undefined) {
+    const parsed = Number(values.limit);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new Error('`--limit` must be a positive integer.');
+    }
+    limit = parsed;
+  }
+
+  const formatValue = values.format?.trim() ?? 'json';
+  if (formatValue !== 'json' && formatValue !== 'jsonl') {
+    throw new Error('`--format` must be either `json` or `jsonl`.');
+  }
+
+  let onlyIds: Set<string> | undefined;
+  if (values['only-ids'] !== undefined) {
+    const parsedIds = values['only-ids']
+      .split(/[,\s]+/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (parsedIds.length === 0 || parsedIds.some((value) => !/^\d{8}$/.test(value))) {
+      throw new Error('`--only-ids` must be a comma-separated list of 8-digit Business IDs.');
+    }
+
+    onlyIds = new Set(parsedIds);
+  }
+
+  return {
+    input,
+    output,
+    limit,
+    format: formatValue,
+    onlyIds,
+  };
 }
 
 function stripUtf8Bom(content: string): string {

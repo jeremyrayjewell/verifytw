@@ -170,7 +170,7 @@ Test-Path data/mof/BGMOPEN1.csv
 Run a small limited test:
 
 ```powershell
-npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.sample.json --limit 1000
+npm run build:mof-index -- --input data/mof/BGMOPEN1.csv --output data/generated/mof-tax-index.sample.json --limit 1000 --format json
 ```
 
 Run the full index as JSONL:
@@ -200,6 +200,7 @@ Notes:
 - MOF and MOEA fields such as capital, address, and dates may differ because source definitions and update timing may differ
 - use JSON output only for fixture runs, selected IDs, or limited samples
 - do not run full no-limit JSON output; use `--format jsonl` for the full MOF dataset
+- on Windows/PowerShell, prefer the space-separated option form shown above rather than `--key=value`
 
 ## Validation-ready MVP
 

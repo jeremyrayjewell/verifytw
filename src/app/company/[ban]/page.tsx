@@ -119,7 +119,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               <div className="space-y-xs">
                 <p>公開資料來源：經濟部商工登記公開資料</p>
                 <p className="text-xs text-neutral-600">
-                  Currently showing MOEA public registration data for company or business records.
+                  Currently showing {company.sourceNameEn}.
                 </p>
               </div>
             </NoticeBox>
@@ -132,19 +132,6 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
                 {lookup.apiMessage && <p>暫時無法取得公開資料，請稍後再試。</p>}
                 <p className="text-xs text-neutral-600">
                   Demo data only. Public-data APIs are not fully connected yet.
-                </p>
-              </div>
-            </NoticeBox>
-          )}
-
-          {lookup.sourceWarnings && lookup.sourceWarnings.length > 0 && (
-            <NoticeBox type="info" title="補充說明">
-              <div className="space-y-xs">
-                {lookup.sourceWarnings.map((warning) => (
-                  <p key={warning}>{warning}</p>
-                ))}
-                <p className="text-xs text-neutral-600">
-                  Some public-data sources did not respond, but this record is still available.
                 </p>
               </div>
             </NoticeBox>

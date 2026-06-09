@@ -222,8 +222,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
           </div>
 
           <div>
-            <h2 className="mb-xl text-2xl font-bold text-main-ink">公開資料來源</h2>
-            <p className="mb-lg text-sm text-neutral-600">Public data source</p>
+            <h2 className="mb-xl text-2xl font-bold text-main-ink">本筆資料來源</h2>
+            <p className="mb-lg text-sm text-neutral-600">Source for this record</p>
             <SourceNote company={company} />
           </div>
 

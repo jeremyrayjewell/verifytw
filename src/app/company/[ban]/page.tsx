@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { CompanyInfoTable } from '@/components/CompanyInfoTable';
 import { DeeperCheckCTA } from '@/components/DeeperCheckCTA';
+import { MofTaxCrossCheck } from '@/components/MofTaxCrossCheck';
 import { RiskSummary } from '@/components/RiskSummary';
 import { SourceNote } from '@/components/SourceNote';
 import { NoticeBox } from '@/components/ui/NoticeBox';
@@ -22,6 +23,7 @@ import {
   getStatusFieldLabel,
 } from '@/lib/companyDisplay';
 import { getCompanyDetailByBan } from '@/lib/companyLookup';
+import { getDemoMofTaxRecordByBusinessId } from '@/lib/mofTaxLookup';
 import { validateBan } from '@/lib/validation';
 
 export const dynamic = 'force-dynamic';
@@ -103,6 +105,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
   const company = lookup.company;
   const showMockNotice = lookup.dataState === 'mock';
   const showRealNotice = lookup.dataState === 'real';
+  const demoMofTaxRecord = getDemoMofTaxRecordByBusinessId(company.ban);
 
   return (
     <div className="min-h-screen bg-surface">
@@ -220,6 +223,8 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
             <p className="mb-lg text-sm text-neutral-600">Lookup summary</p>
             <RiskSummary company={company} />
           </div>
+
+          {demoMofTaxRecord && <MofTaxCrossCheck record={demoMofTaxRecord} />}
 
           <div>
             <h2 className="mb-xl text-2xl font-bold text-main-ink">本筆資料來源</h2>

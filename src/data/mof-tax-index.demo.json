@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "sourceNameZh": "財政部營業（稅籍）登記資料",
+    "sourceNameEn": "MOF tax-business registration data",
+    "coverageNoteZh": "示範索引資料，非完整即時查詢",
+    "coverageNoteEn": "Demo index data, not a complete live lookup"
+  },
+  "records": {
+    "20828393": {
+      "businessId": "20828393",
+      "headOfficeBusinessId": "",
+      "taxRegistrationName": "宏碁股份有限公司",
+      "taxRegistrationAddress": "臺北市松山區民福里復興北路369號7樓之5",
+      "capitalAmount": 30478538280,
+      "establishedDate": "0680701",
+      "organizationType": "股份有限公司",
+      "usesUniformInvoice": "Y",
+      "industries": [
+        { "code": "464111", "name": "電腦及電腦週邊設備批發" },
+        { "code": "483111", "name": "電腦及電腦週邊設備零售" },
+        { "code": "464112", "name": "電腦套裝軟體批發" },
+        { "code": "639099", "name": "未分類其他資訊服務" }
+      ],
+      "sourceType": "mof_tax_registration",
+      "sourceNameZh": "財政部營業（稅籍）登記資料",
+      "sourceNameEn": "MOF tax-business registration data"
+    },
+    "22099131": {
+      "businessId": "22099131",
+      "headOfficeBusinessId": "",
+      "taxRegistrationName": "台灣積體電路製造股份有限公司",
+      "taxRegistrationAddress": "新竹科學園區新竹市力行六路8號",
+      "capitalAmount": 259303804580,
+      "establishedDate": "0760221",
+      "organizationType": "股份有限公司",
+      "usesUniformInvoice": "Y",
+      "industries": [
+        { "code": "261111", "name": "積體電路製造" },
+        { "code": "269999", "name": "其他未分類電子零組件製造" }
+      ],
+      "sourceType": "mof_tax_registration",
+      "sourceNameZh": "財政部營業（稅籍）登記資料",
+      "sourceNameEn": "MOF tax-business registration data"
+    }
+  }
+}

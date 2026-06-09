@@ -154,6 +154,10 @@ The safest next step is to ingest the CSV/ZIP dataset into a generated local ind
 
 Public records remain preliminary reference only.
 
+- `src/data/mof-tax-index.demo.json` is a tiny committed demo subset used for UI development
+- full generated MOF JSONL output remains ignored and is not bundled into production
+- production MOF coverage is not complete or live yet
+
 ### Local MOF Ingestion
 
 The local MOF ingestion workflow expects the official CSV to exist at:

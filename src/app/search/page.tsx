@@ -51,7 +51,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                   type="info"
                   title={
                     searchResult.dataState === 'live_partial'
-                      ? '部分來源暫時未回應'
+                      ? '補充說明'
                       : '資料來源'
                   }
                 >
@@ -60,9 +60,16 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
                     <p className="text-xs text-neutral-600">
                       Showing MOEA public company and business registration data.
                     </p>
-                    {searchResult.apiMessage && (
-                      <p className="text-sm text-neutral-700">{searchResult.apiMessage}</p>
-                    )}
+                    {searchResult.dataState === 'live_partial' ? (
+                      <>
+                        <p className="text-sm text-neutral-700">
+                          補充說明：部分資料來源本次未回應，因此搜尋結果可能不完整。
+                        </p>
+                        <p className="text-xs text-neutral-600">
+                          Note: Some sources did not respond this time, so search results may be incomplete.
+                        </p>
+                      </>
+                    ) : null}
                   </div>
                 </NoticeBox>
               </div>

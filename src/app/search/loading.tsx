@@ -5,8 +5,8 @@ export default function SearchLoading() {
     <div className="min-h-screen bg-surface">
       <section className="py-2xl px-lg bg-rice-paper border-b-2 border-form-gray">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-2xl font-bold text-main-ink mb-lg">查詢企業資訊</h1>
-          <p className="text-sm text-neutral-600 mb-lg">Search company information</p>
+          <h1 className="text-2xl font-bold text-main-ink mb-lg">查詢登記資料</h1>
+          <p className="text-sm text-neutral-600 mb-lg">Search registration records</p>
 
           <div className="w-full rounded-base bg-rice-paper border-2 border-form-gray p-lg">
             <div className="flex flex-col sm:flex-row gap-md items-stretch sm:items-center">

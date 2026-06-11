@@ -212,7 +212,7 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
           ) : (
             <EmptyState
               title="開始查詢"
-              description="輸入登記名稱、統一編號 / Business ID、負責人或英文名稱，搜尋公開登記資料。"
+              description="輸入登記名稱、統一編號 / Business ID 或負責人，搜尋公開登記資料。"
             />
           )}
 

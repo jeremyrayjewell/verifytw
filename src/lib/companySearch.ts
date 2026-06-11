@@ -39,6 +39,12 @@ const COMPANY_NAME_ALIAS_MAP: Record<string, string> = {
   宏碁: '宏碁股份有限公司',
 };
 
+const ENGLISH_ALIAS_MAP: Record<string, string> = {
+  acer: '宏碁股份有限公司',
+  tsmc: '台灣積體電路製造股份有限公司',
+  foxconn: '鴻海精密工業股份有限公司',
+};
+
 const COMPANY_NAME_SUFFIXES = ['股份有限公司', '有限公司', '公司'] as const;
 
 interface LiveKeywordCandidate {
@@ -49,7 +55,10 @@ interface LiveKeywordCandidate {
 function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
   const candidates: LiveKeywordCandidate[] = [];
   const seen = new Set<string>();
-  const mapped = COMPANY_NAME_ALIAS_MAP[query];
+  const normalizedLowerQuery = query.toLowerCase();
+  const mapped =
+    COMPANY_NAME_ALIAS_MAP[query] ??
+    ENGLISH_ALIAS_MAP[normalizedLowerQuery];
   const normalized = mapped ?? query;
 
   const pushCandidate = (candidateQuery: string, notes: string[]) => {
@@ -63,8 +72,12 @@ function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
 
   if (mapped) {
     pushCandidate(mapped, [
-      `已使用常見簡稱對應查詢：「${query}」→「${mapped}」`,
-      'Used a known common-name mapping.',
+      ENGLISH_ALIAS_MAP[normalizedLowerQuery]
+        ? `已使用常見英文簡稱對應查詢：「${query}」→「${mapped}」`
+        : `已使用常見簡稱對應查詢：「${query}」→「${mapped}」`,
+      ENGLISH_ALIAS_MAP[normalizedLowerQuery]
+        ? 'Used a known English alias mapping.'
+        : 'Used a known common-name mapping.',
     ]);
   } else {
     pushCandidate(normalized, []);

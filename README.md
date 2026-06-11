@@ -467,7 +467,7 @@ src/
 }
 ```
 
-Search filters by BAN, Chinese name, English name, or representative.
+Search filters by BAN, registered Chinese name, or representative. A few explicit English aliases such as `acer`, `tsmc`, and `foxconn` are mapped as helper shortcuts, but this is not general English-name search support.
 
 ## Future Integration Points
 

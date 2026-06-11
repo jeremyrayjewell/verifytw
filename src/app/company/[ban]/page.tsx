@@ -66,7 +66,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               <EmptyState
                 icon={<FileSearch size={48} className="text-form-gray" />}
                 title="暫時無法顯示查詢結果"
-                description="你可以稍後再次查詢，或回到查詢頁改用登記名稱、負責人或英文名稱搜尋。"
+                description="你可以稍後再次查詢，或回到查詢頁改用登記名稱或負責人搜尋。"
                 action={{
                   label: '回到查詢頁',
                   href: '/',
@@ -89,7 +89,7 @@ export default async function CompanyDetailPage({ params }: CompanyDetailPagePro
               description={
                 validBan
                   ? `目前沒有找到統一編號 ${params.ban} 的公開資料或示範資料。建議回到查詢頁重新輸入，或改用登記名稱搜尋。`
-                  : '統一編號應為 8 碼數字。你也可以回到查詢頁改用登記名稱、負責人或英文名稱搜尋。'
+                  : '統一編號應為 8 碼數字。你也可以回到查詢頁改用登記名稱或負責人搜尋。'
               }
               action={{
                 label: '重新查詢',

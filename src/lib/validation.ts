@@ -18,7 +18,7 @@ export const searchQuerySchema = z.object({
   query: z
     .string()
     .trim()
-    .min(1, '請先輸入公司名稱、統一編號、負責人或英文名稱')
+    .min(1, '請先輸入公司名稱、統一編號或負責人')
     .max(100, '查詢內容請控制在 100 個字元內'),
   type: z.enum(SEARCH_FILTER_VALUES).optional(),
 });

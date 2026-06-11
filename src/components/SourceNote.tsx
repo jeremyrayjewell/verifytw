@@ -23,7 +23,7 @@ const SourceNote: React.FC<SourceNoteProps> = ({ company, className }) => {
       <div className="flex gap-md">
         <Info size={18} className="mt-xs flex-shrink-0 text-civic-blue" />
         <div className="flex-1">
-          <p className="mb-xs text-sm font-medium text-main-ink">本筆資料來源</p>
+          <p className="mb-xs text-sm font-medium text-main-ink">資料明細</p>
           <dl className="mb-lg space-y-sm text-sm text-main-ink">
             <div>
               <dt className="text-xs font-semibold uppercase tracking-wider text-neutral-600">

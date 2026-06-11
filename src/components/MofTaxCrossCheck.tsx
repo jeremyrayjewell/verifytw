@@ -4,7 +4,6 @@ import React from 'react';
 import { Building2, FileText, MapPin, Receipt, Shapes, Tags } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { NormalizedMofTaxRegistrationRecord } from '@/lib/sources/mof';
-import { getDemoMofTaxIndexMetadata } from '@/lib/mofTaxLookup';
 
 interface MofTaxCrossCheckProps {
   record: NormalizedMofTaxRegistrationRecord;
@@ -31,9 +30,37 @@ function formatUniformInvoice(value?: 'Y' | 'N'): string {
   return '未提供 / Not provided';
 }
 
-const MofTaxCrossCheck: React.FC<MofTaxCrossCheckProps> = ({ record, className }) => {
-  const metadata = getDemoMofTaxIndexMetadata();
+function formatRocDate(value?: string): string {
+  if (!value) {
+    return '未提供 / Not provided';
+  }
 
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{2,3})(\d{2})(\d{2})$/);
+
+  if (!match) {
+    return '未提供 / Not provided';
+  }
+
+  const [, rocYearRaw, month, day] = match;
+  const rocYear = Number.parseInt(rocYearRaw, 10);
+  const gregorianYear = rocYear + 1911;
+
+  if (
+    Number.isNaN(rocYear) ||
+    Number.isNaN(gregorianYear) ||
+    Number.parseInt(month, 10) < 1 ||
+    Number.parseInt(month, 10) > 12 ||
+    Number.parseInt(day, 10) < 1 ||
+    Number.parseInt(day, 10) > 31
+  ) {
+    return '未提供 / Not provided';
+  }
+
+  return `民國 ${rocYear}/${month}/${day}（${gregorianYear}/${month}/${day}）`;
+}
+
+const MofTaxCrossCheck: React.FC<MofTaxCrossCheckProps> = ({ record, className }) => {
   const items = [
     {
       icon: Building2,
@@ -57,7 +84,7 @@ const MofTaxCrossCheck: React.FC<MofTaxCrossCheckProps> = ({ record, className }
       icon: FileText,
       label: '設立日期',
       labelEn: 'Established date',
-      value: record.establishedDate || '未提供 / Not provided',
+      value: formatRocDate(record.establishedDate),
     },
     {
       icon: Shapes,
@@ -81,8 +108,8 @@ const MofTaxCrossCheck: React.FC<MofTaxCrossCheckProps> = ({ record, className }
       </div>
 
       <div className="rounded-base border border-form-gray bg-support-blue-gray p-lg">
-        <p className="text-sm text-main-ink">{metadata.coverageNoteZh}</p>
-        <p className="mt-xs text-xs text-neutral-600">{metadata.coverageNoteEn}</p>
+        <p className="text-sm text-main-ink">示範索引資料</p>
+        <p className="mt-xs text-xs text-neutral-600">Demo index data</p>
       </div>
 
       <div className="space-y-sm text-sm text-neutral-700">

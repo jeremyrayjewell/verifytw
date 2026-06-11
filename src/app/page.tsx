@@ -73,10 +73,10 @@ export default function Home() {
               Search by registered Chinese name, Business ID, or responsible person.
             </p>
             <p className="mt-xs text-xs text-neutral-600 text-center">
-              建議輸入公司登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
+              建議輸入登記中文名稱或統一編號，例如「台灣積體電路製造股份有限公司」或「22099131」。
             </p>
             <p className="mt-xs text-xs text-neutral-600 text-center">
-              Use the registered company name or 8-digit Business ID.
+              Use the registered Chinese name or 8-digit Business ID, for example &quot;台灣積體電路製造股份有限公司&quot; or &quot;22099131&quot;.
             </p>
           </div>
 

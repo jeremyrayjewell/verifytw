@@ -73,10 +73,10 @@ export function SearchResultsControls({
         For best results, use the 8-digit Business ID.
       </p>
       <p className="mt-md text-sm text-neutral-700">
-        建議輸入登記名稱或統一編號，例如「台灣積體電路製造股份有限公司」。
+        建議輸入登記中文名稱或統一編號，例如「台灣積體電路製造股份有限公司」或「22099131」。
       </p>
       <p className="mt-xs text-xs text-neutral-600">
-        Use the registered name or 8-digit Business ID, for example &quot;Taiwan Semiconductor Manufacturing Co., Ltd.&quot;
+        Use the registered Chinese name or 8-digit Business ID, for example &quot;台灣積體電路製造股份有限公司&quot; or &quot;22099131&quot;.
       </p>
       {isPending && (
         <p className="mt-sm text-sm text-neutral-600" aria-live="polite">

@@ -43,6 +43,7 @@ const ENGLISH_ALIAS_MAP: Record<string, string> = {
   acer: '宏碁股份有限公司',
   tsmc: '台灣積體電路製造股份有限公司',
   foxconn: '鴻海精密工業股份有限公司',
+  asus: '華碩電腦股份有限公司',
 };
 
 const COMPANY_NAME_SUFFIXES = ['股份有限公司', '有限公司', '公司'] as const;
@@ -157,6 +158,51 @@ function mergeLiveResults(companies: Company[]): Company[] {
   return [...byBan.values()];
 }
 
+function shouldSuppressPartialSourceWarning(options: {
+  filterType: SearchFilter;
+  matchedCompanyCandidate: LiveKeywordCandidate;
+  query: string;
+  broaderQuery?: string;
+  companyFailed: boolean;
+  businessFailed: boolean;
+  filteredLiveResults: Company[];
+}) {
+  const {
+    filterType,
+    matchedCompanyCandidate,
+    query,
+    broaderQuery,
+    companyFailed,
+    businessFailed,
+    filteredLiveResults,
+  } = options;
+
+  if (companyFailed || !businessFailed) {
+    return false;
+  }
+
+  if (filterType !== 'all' && filterType !== 'company') {
+    return false;
+  }
+
+  const hasCompanyResult = filteredLiveResults.some(
+    (company) => company.entityType === 'company'
+  );
+
+  if (!hasCompanyResult) {
+    return false;
+  }
+
+  const usedAlias = matchedCompanyCandidate.notes.some(
+    (note) =>
+      note.includes('常見簡稱對應') || note.includes('English alias mapping')
+  );
+  const isExactRegisteredNameQuery =
+    matchedCompanyCandidate.query === query && !broaderQuery;
+
+  return usedAlias || isExactRegisteredNameQuery;
+}
+
 export async function getSearchResults(
   rawQuery: string,
   filterType: SearchFilter = 'all'
@@ -256,8 +302,17 @@ export async function getSearchResults(
     businessLiveResult.state === 'parse_error';
 
   if (filteredLiveResults.length > 0) {
+    const suppressPartialSourceWarning = shouldSuppressPartialSourceWarning({
+      filterType,
+      matchedCompanyCandidate,
+      query,
+      broaderQuery,
+      companyFailed,
+      businessFailed,
+      filteredLiveResults,
+    });
     const partialMessage =
-      companyFailed || businessFailed
+      (companyFailed || businessFailed) && !suppressPartialSourceWarning
         ? '部分公開資料來源暫時無法回應。'
         : undefined;
 

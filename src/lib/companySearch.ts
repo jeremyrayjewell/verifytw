@@ -197,10 +197,14 @@ function shouldSuppressPartialSourceWarning(options: {
     (note) =>
       note.includes('常見簡稱對應') || note.includes('English alias mapping')
   );
-  const isExactRegisteredNameQuery =
-    matchedCompanyCandidate.query === query && !broaderQuery;
+  const normalizedQuery = query.trim();
+  const hasExactRegisteredNameCompanyHit = filteredLiveResults.some(
+    (company) =>
+      company.entityType === 'company' &&
+      company.nameZh.trim() === normalizedQuery
+  );
 
-  return usedAlias || isExactRegisteredNameQuery;
+  return usedAlias || hasExactRegisteredNameCompanyHit;
 }
 
 export async function getSearchResults(

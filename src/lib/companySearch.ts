@@ -53,6 +53,10 @@ interface LiveKeywordCandidate {
   notes: string[];
 }
 
+function normalizeRegisteredChineseName(value: string): string {
+  return value.replace(/\s+/g, '').trim();
+}
+
 function buildLiveKeywordCandidates(query: string): LiveKeywordCandidate[] {
   const candidates: LiveKeywordCandidate[] = [];
   const seen = new Set<string>();
@@ -162,7 +166,8 @@ function shouldSuppressPartialSourceWarning(options: {
   filterType: SearchFilter;
   matchedCompanyCandidate: LiveKeywordCandidate;
   query: string;
-  broaderQuery?: string;
+  companyLiveFound: boolean;
+  companyLiveCompanies: Company[];
   companyFailed: boolean;
   businessFailed: boolean;
   filteredLiveResults: Company[];
@@ -171,7 +176,8 @@ function shouldSuppressPartialSourceWarning(options: {
     filterType,
     matchedCompanyCandidate,
     query,
-    broaderQuery,
+    companyLiveFound,
+    companyLiveCompanies,
     companyFailed,
     businessFailed,
     filteredLiveResults,
@@ -182,6 +188,10 @@ function shouldSuppressPartialSourceWarning(options: {
   }
 
   if (filterType !== 'all' && filterType !== 'company') {
+    return false;
+  }
+
+  if (!companyLiveFound) {
     return false;
   }
 
@@ -197,11 +207,10 @@ function shouldSuppressPartialSourceWarning(options: {
     (note) =>
       note.includes('常見簡稱對應') || note.includes('English alias mapping')
   );
-  const normalizedQuery = query.trim();
-  const hasExactRegisteredNameCompanyHit = filteredLiveResults.some(
+  const normalizedQuery = normalizeRegisteredChineseName(query);
+  const hasExactRegisteredNameCompanyHit = companyLiveCompanies.some(
     (company) =>
-      company.entityType === 'company' &&
-      company.nameZh.trim() === normalizedQuery
+      normalizeRegisteredChineseName(company.nameZh) === normalizedQuery
   );
 
   return usedAlias || hasExactRegisteredNameCompanyHit;
@@ -310,7 +319,9 @@ export async function getSearchResults(
       filterType,
       matchedCompanyCandidate,
       query,
-      broaderQuery,
+      companyLiveFound: companyLiveResult?.state === 'found',
+      companyLiveCompanies:
+        companyLiveResult?.state === 'found' ? companyLiveResult.companies : [],
       companyFailed,
       businessFailed,
       filteredLiveResults,
